@@ -12,7 +12,7 @@ $ pip install -r requirements.txt
 
 Run app with
 ```
-$ FLASK_APP=ph-hospital/main.py flask run
+$ flask run
 ```
 
 Access it on [localhost](localhost:5000)
