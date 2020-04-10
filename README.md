@@ -8,6 +8,11 @@ Install dependencies with
 $ pip install -r requirements.txt
 ```
 
+Setup the database with
+```
+$ flask db upgrade
+```
+
 ## Develop
 
 Run app with
