@@ -1,7 +1,7 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login
 from flask_login import UserMixin
-import enum
+import enum, random, string
 
 class AccountType(enum.Enum):
   admin = 1
@@ -24,6 +24,12 @@ class User(UserMixin, db.Model):
 
   def set_account_type(self, account_type):
     self.account_type = account_type
+
+  @staticmethod
+  def random_password():
+    stringLength = 8
+    lettersAndDigits = string.ascii_letters + string.digits
+    return ''.join(random.choice(lettersAndDigits) for i in range(stringLength))
 
   def __repr__(self):
     return '<User {}>'.format(self.username)    
