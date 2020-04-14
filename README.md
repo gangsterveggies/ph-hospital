@@ -28,3 +28,12 @@ Access it on [localhost](localhost:5000)
 # install em with pip in the venv
 $ pip freeze --local > requirements.txt
 ```
+
+## Testing email services
+
+Set the `FLASK_DEBUG` to 0 on `.flaskenv` and open a local email
+server like so:
+
+```
+$ python -m smtpd -n -c DebuggingServer localhost:8025
+```
