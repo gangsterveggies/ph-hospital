@@ -22,3 +22,12 @@ def send_password_reset_email(user):
                                        user=user, token=token),
              html_body=render_template('email/reset_password.html',
                                        user=user, token=token))
+
+def send_create_account_email(user, password):
+  send_email('[ph-hospital] Account Created',
+             sender=app.config['ADMINS'][0],
+             recipients=[user.email],
+             text_body=render_template('email/create_account.txt',
+                                       user=user, password=password),
+             html_body=render_template('email/create_account.html',
+                                       user=user, password=password))

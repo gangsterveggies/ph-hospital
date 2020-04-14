@@ -15,6 +15,9 @@
       {% else %}
       <a href="{{ url_for('logout') }}">Logout</a>
       {% endif %}
+      {% if not(current_user.is_anonymous) and current_user.is_admin() %}
+      <a href="{{ url_for('create_account') }}">Create account</a>
+      {% endif %}
     </div>
     <hr>
     {% with messages = get_flashed_messages() %}

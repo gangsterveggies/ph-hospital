@@ -1,0 +1,12 @@
+Welcome to ph-hospital!
+
+An account was created with this email.
+
+Your credentials are:
+
+Username: {{ user.username }}
+Password: {{ password }}
+
+Sincerely,
+
+The ph-hospital Team

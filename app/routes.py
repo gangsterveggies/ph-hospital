@@ -3,8 +3,8 @@ from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
 from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm
 from app.models import User, AccountType
-from app.helpers import admin_required
-from app.email import send_password_reset_email
+from app.helpers import admin_required, user_is_admin
+from app.email import send_password_reset_email, send_create_account_email
 from werkzeug.urls import url_parse
 
 @app.route('/')
@@ -58,6 +58,7 @@ def create_account():
     user.set_account_type(account_type)
     db.session.add(user)
     db.session.commit()
+    send_create_account_email(user, password)
     flash('Created user {} with password {}'.format(user.username, password))
     return redirect(url_for('index'))
   return render_template('create_account.html', title='Create Account', form=form)
