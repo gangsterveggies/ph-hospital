@@ -31,8 +31,7 @@ $ pip freeze --local > requirements.txt
 
 ## Testing email services
 
-Set the `FLASK_DEBUG` to 0 on `.flaskenv` and open a local email
-server like so:
+Open a local email server like so:
 
 ```
 $ python -m smtpd -n -c DebuggingServer localhost:8025
