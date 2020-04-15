@@ -31,8 +31,9 @@ class User(UserMixin, db.Model):
       {'reset_password': self.id, 'exp': time() + expires_in},
       app.config['SECRET_KEY'], algorithm='HS256').decode('utf-8')
 
-  def is_admin(self):
-    return self.is_authenticated and self.account_type == AccountType.admin
+  @staticmethod
+  def is_admin(u):
+    return u.is_authenticated and u.account_type == AccountType.admin
 
   @staticmethod
   def verify_reset_password_token(token):

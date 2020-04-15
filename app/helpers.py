@@ -1,17 +1,19 @@
 from flask import flash, redirect, url_for
 from flask_login import current_user
-from app.models import AccountType
+from app.models import User, AccountType
 from functools import wraps
 
 def admin_required(f):
   @wraps(f)
   def wrap(*args, **kwargs):
-    if current_user.is_admin():
+    if User.is_admin(current_user):
       return f(*args, **kwargs)
     else:
-      flash("You need to be an admin")
+      flash("Invalid page", 'danger')
       return redirect(url_for('login'))
   return wrap
 
-def user_is_admin(user):
-  return True
+def valid_class(form_data):
+  if form_data.errors:
+    return "is-invalid"
+  return ""

@@ -13,9 +13,13 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 login = LoginManager(app)
 login.login_view = 'login'
+login.login_message_category = "warning"
 mail = Mail(app)
 
-from app import routes, models, errors
+from app import routes, models, errors, helpers
+
+app.jinja_env.globals.update(valid_class=helpers.valid_class)
+app.jinja_env.globals.update(is_admin=models.User.is_admin)
 
 if not app.debug:
   if app.config['MAIL_SERVER']:

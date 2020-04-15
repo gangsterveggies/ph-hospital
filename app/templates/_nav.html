@@ -1,0 +1,29 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <a class="navbar-brand" href="#">ph-hospital</a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+
+  <div class="collapse navbar-collapse" id="navbarSupportedContent">
+    <ul class="navbar-nav mr-auto">
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+      </li>
+
+      {% if current_user.is_anonymous %}
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+      </li>
+      {% else %}
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+      </li>
+      {% endif %}
+
+      {% if is_admin(current_user) %}
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('create_account') }}">Create account</a>
+      </li>
+      {% endif %}
+  </div>
+</nav>

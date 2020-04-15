@@ -1,0 +1,19 @@
+{% macro error_macro(entry) -%}
+{% for error in entry.errors %}
+<div class="invalid-feedback">
+  {{ error }}
+</div>
+{% endfor %}
+{%- endmacro %}
+
+{% macro input(entry, size=32) -%}
+  <div class="form-group">
+    {{ entry.label }}
+    {{ entry(size=32, class_='form-control '+ valid_class(entry)) }}
+    {{ error_macro(entry) }}
+  </div>
+{%- endmacro %}
+
+{% macro submit_button(entry) -%}
+  {{ entry(class_='btn btn-primary btn-lg btn-block') }}
+{%- endmacro %}
