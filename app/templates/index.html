@@ -2,7 +2,27 @@
 
 {% block content %}
 <h1>Hi, {{ current_user.username }}! You are a {{ current_user.account_type.name }}</h1>
-{% for post in posts %}
-<div><p>{{ post.author.username }} says: <b>{{ post.body }}</b></p></div>
-{% endfor %}
+
+<hr />
+
+<h2>Hospital list</h2>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">Hospital Name</th>
+      <th scope="col">Address</th>
+      <th scope="col">Contact Info</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for hospital in hospitals %}
+    <tr>
+      <td><a href="{{ url_for('hospital', id=hospital.id) }}">{{ hospital.name }}</a></td>
+      <td>{{ hospital.address }}</td>
+      <td>{{ hospital.contact }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
 from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm
-from app.models import User, AccountType
+from app.models import User, AccountType, Hospital
 from app.helpers import admin_required
 from app.email import send_password_reset_email, send_create_account_email
 from werkzeug.urls import url_parse
@@ -11,14 +11,8 @@ from werkzeug.urls import url_parse
 @app.route('/index')
 @login_required
 def index():
-  posts = [{
-    'author': {'username': 'Pedro'},
-    'body': 'Test'
-  }, {
-    'author': {'username': 'Tim'},
-    'body': 'Test2'
-  }]
-  return render_template('index.html', title='Home', posts=posts)
+  hospitals = Hospital.query.all()
+  return render_template('index.html', title='Home', hospitals=hospitals)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -91,3 +85,8 @@ def reset_password(token):
     flash('Your password has been reset.', 'success')
     return redirect(url_for('login'))
   return render_template('reset_password.html', form=form)
+
+@app.route('/hospital/<id>')
+def hospital(id):
+  hospital = Hospital.query.filter_by(id=id).first_or_404()
+  return render_template('hospital.html', hospital=hospital)

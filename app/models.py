@@ -16,6 +16,7 @@ class User(UserMixin, db.Model):
   email = db.Column(db.String(120), index=True, unique=True)
   password_hash = db.Column(db.String(128))
   account_type = db.Column(db.Enum(AccountType))
+  hospital = db.relationship('Hospital', uselist=False, backref='owner')
 
   def set_password(self, password):
     self.password_hash = generate_password_hash(password)
@@ -56,3 +57,21 @@ class User(UserMixin, db.Model):
 @login.user_loader
 def load_user(id):
   return User.query.get(int(id))
+
+class SupplyType(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(64), index=True, unique=True)
+
+  def __repr__(self):
+    return '<SupplyType {}>'.format(self.name)
+
+class Hospital(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  name = db.Column(db.String(128), index=True, unique=True)
+  location = db.Column(db.String(128))
+  address = db.Column(db.String(128))
+  contact = db.Column(db.String(128))
+  owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
+  def __repr__(self):
+    return '<Hospital {}>'.format(self.name)
