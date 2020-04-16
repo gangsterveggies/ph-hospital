@@ -37,7 +37,7 @@ nosetests.xml
 
 venv
 app.db
-microblog.log*
+ph_hospital.log*
 
 # Emacs files
 *~

@@ -22,6 +22,14 @@ $ flask run
 
 Access it on [localhost](localhost:5000)
 
+To initialize the database run this (warning: it deletes all users)
+
+```
+$ flask setup-debug-database
+```
+
+This creates a default user with username 'tim' and password 'tim'.
+
 ## Add New Dependencies
 
 ```
@@ -34,5 +42,5 @@ $ pip freeze --local > requirements.txt
 Open a local email server like so:
 
 ```
-$ python -m smtpd -n -c DebuggingServer localhost:8025
+$ flask open-mail-server
 ```
