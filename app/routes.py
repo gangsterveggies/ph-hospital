@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
-from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm
+from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm
 from app.models import User, AccountType, Hospital
 from app.helpers import admin_required
 from app.email import send_password_reset_email, send_create_account_email
@@ -89,4 +89,26 @@ def reset_password(token):
 @app.route('/hospital/<id>')
 def hospital(id):
   hospital = Hospital.query.filter_by(id=id).first_or_404()
-  return render_template('hospital.html', hospital=hospital)
+  owner = User.query.filter_by(id=hospital.owner_id).first().username if not hospital.owner_id is None else None
+  return render_template('hospital.html', hospital=hospital, owner=owner)
+
+@app.route('/hospital_edit_owner/<id>', methods=['GET', 'POST'])
+@admin_required
+def hospital_edit_owner(id):
+  hospital = Hospital.query.filter_by(id=id).first_or_404()
+  owner = User.query.filter_by(id=hospital.owner_id).first().username if not hospital.owner_id is None else None
+  form = HospitalEditOwnerForm(username=owner)
+  if form.validate_on_submit():
+    app.logger.info(form.username.data)
+    user = User.query.filter_by(username=form.username.data).first()
+    if user is None:
+      flash('Invalid username', 'danger')
+      return redirect(url_for('hospital_edit_owner'))
+    if user.account_type == AccountType.donor:
+      flash('User can\'t be a donor account', 'danger')
+      return redirect(url_for('hospital_edit_owner', id=id))
+    hospital.owner_id = user.id
+    db.session.commit()
+    flash('Hospital owner successfully altered', 'success')
+    return redirect(url_for('hospital', id=id))
+  return render_template('hospital_edit_owner.html', id=id, hospital=hospital, form=form, owner=owner)

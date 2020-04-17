@@ -6,10 +6,10 @@
 {% endfor %}
 {%- endmacro %}
 
-{% macro input(entry, size=32) -%}
+{% macro input(entry, size=32, placeholder='') -%}
   <div class="form-group">
     {{ entry.label }}
-    {{ entry(size=32, class_='form-control '+ valid_class(entry)) }}
+    {{ entry(size=size, class_='form-control '+ valid_class(entry), placeholder=placeholder) }}
     {{ error_macro(entry) }}
   </div>
 {%- endmacro %}

@@ -33,3 +33,12 @@ class ResetPasswordForm(FlaskForm):
   password2 = PasswordField(
     'Repeat Password', validators=[DataRequired(), EqualTo('password')])
   submit = SubmitField('Request Password Reset')
+
+class HospitalEditOwnerForm(FlaskForm):
+  username = StringField('Username', validators=[DataRequired()])
+  submit = SubmitField('Change Owner')
+
+  def validate_username(self, username):
+    user = User.query.filter_by(username=username.data).first()
+    if user is None:
+      raise ValidationError('Username not found.')
