@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>List of PPEs</h1>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">PPE Name</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for supply in supplies %}
+    <tr>
+      {% if supply.info %}
+      <td><a href="{{ supply.info }}" target="_blank">{{ supply.name }}</a></td>
+      {% else %}
+      <td>{{ supply.name }}</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if is_admin(current_user) %}
+<p>Is something missing? <a href="{{ url_for('add_supply_type') }}">Add a PPE type</a>!</p>
+{% endif %}
+{% endblock %}

@@ -1,8 +1,8 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
-from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm
-from app.models import User, AccountType, Hospital
+from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm
+from app.models import User, AccountType, Hospital, SupplyType
 from app.helpers import admin_required
 from app.email import send_password_reset_email, send_create_account_email
 from werkzeug.urls import url_parse
@@ -112,3 +112,20 @@ def hospital_edit_owner(id):
     flash('Hospital owner successfully altered', 'success')
     return redirect(url_for('hospital', id=id))
   return render_template('hospital_edit_owner.html', id=id, hospital=hospital, form=form, owner=owner)
+
+@app.route('/supply_type')
+def supply_type():
+  supplies = SupplyType.query.all()
+  return render_template('supply_type.html', title='List of PPEs', supplies=supplies)
+
+@app.route('/add_supply_type', methods=['GET', 'POST'])
+@admin_required
+def add_supply_type():
+  form = AddSupplyTypeForm()
+  if form.validate_on_submit():
+    supply = SupplyType(name=form.name.data, info=form.info.data)
+    db.session.add(supply)
+    db.session.commit()
+    flash('Added PPE type {}'.format(supply.name), 'success')
+    return redirect(url_for('index'))
+  return render_template('add_supply_type.html', title='Add PPE', form=form)

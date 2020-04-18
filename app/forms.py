@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, RadioField
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
-from app.models import User
+from app.models import User, SupplyType
 
 class LoginForm(FlaskForm):
   username = StringField('Username', validators=[DataRequired()])
@@ -42,3 +42,13 @@ class HospitalEditOwnerForm(FlaskForm):
     user = User.query.filter_by(username=username.data).first()
     if user is None:
       raise ValidationError('Username not found.')
+
+class AddSupplyTypeForm(FlaskForm):
+  name = StringField('PPE type', validators=[DataRequired()])
+  info = StringField('Info url')
+  submit = SubmitField('Add PPE type')
+
+  def validate_name(self, name):
+    supply = SupplyType.query.filter_by(name=name.data).first()
+    if not supply is None:
+      raise ValidationError('There already is a PPE named {}.'.format(name.data))

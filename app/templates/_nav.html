@@ -20,6 +20,10 @@
       </li>
       {% endif %}
 
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('supply_type') }}">PPEs</a>
+      </li>
+      
       {% if is_admin(current_user) %}
       <li class="nav-item">
         <a class="nav-link" href="{{ url_for('create_account') }}">Create account</a>

@@ -61,6 +61,7 @@ def load_user(id):
 class SupplyType(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(64), index=True, unique=True)
+  info = db.Column(db.String(128))
 
   def __repr__(self):
     return '<SupplyType {}>'.format(self.name)
