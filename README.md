@@ -29,7 +29,7 @@ $ flask setup-debug-database
 ```
 
 This creates a default user with username 'tim' and password 'tim',
-also multiple users named 'donor<i>' with password 'donor', for every
+also multiple users named 'donor i' with password 'donor', for every
 account type. It also creates a bunch of fake hospitals.
 
 ## Add New Dependencies
