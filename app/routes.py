@@ -11,7 +11,7 @@ from werkzeug.urls import url_parse
 @app.route('/index')
 @login_required
 def index():
-  hospitals = Hospital.query.all()
+  hospitals = Hospital.query.order_by(Hospital.name.asc()).all()
   return render_template('index.html', title='Home', hospitals=hospitals)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -115,7 +115,7 @@ def hospital_edit_owner(id):
 
 @app.route('/supply_type')
 def supply_type():
-  supplies = SupplyType.query.all()
+  supplies = SupplyType.query.order_by(SupplyType.name.asc()).all()
   return render_template('supply_type.html', title='List of PPEs', supplies=supplies)
 
 @app.route('/add_supply_type', methods=['GET', 'POST'])
@@ -127,5 +127,5 @@ def add_supply_type():
     db.session.add(supply)
     db.session.commit()
     flash('Added PPE type {}'.format(supply.name), 'success')
-    return redirect(url_for('index'))
+    return redirect(url_for('supply_type'))
   return render_template('add_supply_type.html', title='Add PPE', form=form)

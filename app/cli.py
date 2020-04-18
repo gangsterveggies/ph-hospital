@@ -1,7 +1,7 @@
 import click, os
 from faker import Faker
 from app import app, db
-from app.models import User, AccountType, Hospital
+from app.models import User, AccountType, Hospital, SupplyType
 
 @app.cli.command('setup-debug-database')
 def setup_debug_database():
@@ -40,6 +40,30 @@ def setup_debug_database():
     db.session.commit()
   else:
     click.echo('This command only works in debug mode...')
+
+@app.cli.command('add-base-ppes')
+def add_base_ppes():
+  if app.debug:
+    click.echo('Deleting all current PPEs')
+    SupplyType.query.delete()
+  supply_list_pairs = [
+    ("N95 Regular", "https://en.wikipedia.org/wiki/N95_mask"),
+    ("N95 Small", "https://en.wikipedia.org/wiki/N95_mask"),
+    ("Surgical Mask", "https://en.wikipedia.org/wiki/Surgical_mask"),
+    ("Gloves", "https://en.wikipedia.org/wiki/Medical_glove"),
+    ("Face Shields", "https://en.wikipedia.org/wiki/Face_shield#Medical"),
+    ("Body Suits", ""),
+    ("Wipes", ""),
+    ("Sanitizer", ""),
+    ("Googles", ""),
+    ("Gowns", "")
+  ]
+  for s_name, s_info in supply_list_pairs:
+    supply = SupplyType.query.filter_by(name=s_name).first()
+    if supply is None:
+      supply = SupplyType(name=s_name, info=s_info)
+      db.session.add(supply)
+  db.session.commit()
 
 @app.cli.command('open-mail-server')
 def open_mail_server():

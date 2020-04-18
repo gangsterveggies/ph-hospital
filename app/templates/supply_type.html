@@ -3,24 +3,28 @@
 {% block content %}
 <h1>List of PPEs</h1>
 
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th scope="col">PPE Name</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for supply in supplies %}
-    <tr>
-      {% if supply.info %}
-      <td><a href="{{ supply.info }}" target="_blank">{{ supply.name }}</a></td>
-      {% else %}
-      <td>{{ supply.name }}</td>
-      {% endif %}
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="row justify-content-md-center">
+  <div class="col-md-6">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th scope="col">PPE Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for supply in supplies %}
+        <tr>
+          {% if supply.info %}
+          <td><a href="{{ supply.info }}" target="_blank">{{ supply.name }}</a></td>
+          {% else %}
+          <td>{{ supply.name }}</td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
 {% if is_admin(current_user) %}
 <p>Is something missing? <a href="{{ url_for('add_supply_type') }}">Add a PPE type</a>!</p>
