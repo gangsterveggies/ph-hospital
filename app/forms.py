@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, RadioField
+from wtforms import StringField, PasswordField, SubmitField, RadioField, SelectField, IntegerField
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo
 from app.models import User, SupplyType, Hospital
 
@@ -72,3 +72,19 @@ class CreateHospitalForm(FlaskForm):
     hospital = Hospital.query.filter_by(name=name.data).first()
     if not hospital is None:
       raise ValidationError('There already is a hospital with that name.')
+
+class DonateForm(FlaskForm):
+  name = StringField('Hospital Name', validators=[DataRequired()])
+  supply_type = SelectField('PPE Type', choices=[(s.id, s.name) for s in SupplyType.query.order_by('name')], coerce=int)
+  quantity = IntegerField('Quantity', validators=[DataRequired()])
+  submit = SubmitField('Donate')
+
+  def validate_name(self, name):
+    hospital = Hospital.query.filter_by(name=name.data).first()
+    if hospital is None:
+      raise ValidationError('Hospital not found.')
+
+  def validate_supply_type(self, supply_type):
+    supply = SupplyType.query.filter_by(id=supply_type.data).first()
+    if supply is None:
+      raise ValidationError('Invalid PPE type.')

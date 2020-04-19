@@ -1,8 +1,8 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
-from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm
-from app.models import User, AccountType, Hospital, SupplyType
+from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, DonateForm
+from app.models import User, AccountType, Hospital, SupplyType, DonationGroup, Donation
 from app.helpers import admin_required
 from app.email import send_password_reset_email, send_create_account_email
 from werkzeug.urls import url_parse
@@ -10,7 +10,13 @@ from werkzeug.urls import url_parse
 @app.route('/')
 @app.route('/index')
 def index():
-  return render_template('index.html', title='Home')
+  donations = []
+  if not current_user.is_anonymous:
+    donations = [{'hospital': donation.hospital.name
+                  ,'supply': donation.donations[0].supply.name
+                  ,'quantity': donation.donations[0].quantity
+                  ,'timestamp': donation.timestamp} for donation in current_user.donations.order_by(DonationGroup.timestamp.desc())]
+  return render_template('index.html', title='Home', donations=donations)
 
 #######################################
 ## Authentication pages
@@ -107,7 +113,7 @@ def hospital_view(id):
 @admin_required
 def hospital_edit_owner(id):
   hospital = Hospital.query.filter_by(id=id).first_or_404()
-  owner = User.query.filter_by(id=hospital.owner_id).first().username if not hospital.owner_id is None else None
+  owner = hospital.owner.username if not hospital.owner is None else None
   form = HospitalEditOwnerForm(username=owner)
   if form.validate_on_submit():
     app.logger.info(form.username.data)
@@ -160,3 +166,22 @@ def add_supply_type():
     flash('Added PPE type {}'.format(supply.name), 'success')
     return redirect(url_for('supply_type'))
   return render_template('add_supply_type.html', title='Add PPE', form=form)
+
+#######################################
+## Donation related pages
+#######################################
+@app.route('/donate', methods=['GET', 'POST'])
+@login_required
+def donate():
+  form = DonateForm()
+  if form.validate_on_submit():
+    app.logger.info('here')
+    hospital = Hospital.query.filter_by(name=form.name.data).first()
+    donation = DonationGroup(donor_id=current_user.id, hospital_id=hospital.id)
+    db.session.add(donation)
+    single_donation = Donation(supply_id=form.supply_type.data, group=donation, quantity=form.quantity.data)
+    db.session.add(single_donation)
+    db.session.commit()
+    flash('Thank you for your donation!', 'success')
+    return redirect(url_for('index'))
+  return render_template('donate.html', title='Donate PPE', form=form)

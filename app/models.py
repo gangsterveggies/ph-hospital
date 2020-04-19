@@ -3,6 +3,7 @@ from app import db, login, app
 from flask_login import UserMixin
 import enum, random, string, jwt
 from time import time
+from datetime import datetime
 
 class AccountType(enum.Enum):
   admin = 1
@@ -17,6 +18,7 @@ class User(UserMixin, db.Model):
   password_hash = db.Column(db.String(128))
   account_type = db.Column(db.Enum(AccountType))
   hospital = db.relationship('Hospital', uselist=False, backref='owner')
+  donations = db.relationship('DonationGroup', backref='donor', lazy='dynamic')
 
   def set_password(self, password):
     self.password_hash = generate_password_hash(password)
@@ -62,6 +64,7 @@ class SupplyType(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(64), index=True, unique=True)
   info = db.Column(db.String(128))
+  donations = db.relationship('Donation', backref='supply', lazy='dynamic')
 
   def __repr__(self):
     return '<SupplyType {}>'.format(self.name)
@@ -74,6 +77,27 @@ class Hospital(db.Model):
   region = db.Column(db.String(128))
   contact = db.Column(db.String(128))
   owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+  donations = db.relationship('DonationGroup', backref='hospital', lazy='dynamic')
 
   def __repr__(self):
     return '<Hospital {}>'.format(self.name)
+
+class Donation(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  supply_id = db.Column(db.Integer, db.ForeignKey('supply_type.id'))
+  group_id =  db.Column(db.Integer, db.ForeignKey('donation_group.id'))
+  quantity = db.Column(db.Integer)
+
+  def __repr__(self):
+    supply = SupplyType.query.filter_by(id=self.supply_id).first()
+    return '<DonationSingle {}x{}>'.format(supply.name, self.quantity)
+  
+class DonationGroup(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  donor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+  hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'))
+  donations = db.relationship('Donation', backref='group', lazy='dynamic')
+  timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+
+  def __repr__(self):
+    return '<Donation {}>'.format(self.donations)

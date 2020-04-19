@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-md-center">
+  <div class="col-md-6">
+    <h1></h1>
+    <form action="" method="post" novalidate>
+      {{ form.hidden_tag() }}
+      {{ macros.input(form.name) }}
+
+      <div class="form-group">
+        {{ form.supply_type.label }}
+        <select id="supply-type" name="supply_type" class="form-control {{ valid_class(form.supply_type) }}">
+          {% for subfield in form.supply_type %}
+          {{ subfield }}
+          {% endfor %}
+        </select>
+        {{ macros.error_macro(form.supply_type) }}
+      </div>
+
+      {{ macros.input(form.quantity) }}
+      
+      <p>{{ macros.submit_button(form.submit) }}</p>
+    </form>
+  </div>
+</div>
+{% endblock %}
