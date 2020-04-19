@@ -1,12 +1,28 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1><a href="{{ url_for('index') }}"><i class="fas fa-arrow-left"></i></a> {{ hospital.name }} in {{ hospital.address }}</h1>
+<h1>List of Hospitals</h1>
 
 {% if is_admin(current_user) %}
-{% if owner %}
-<p>Currently owned by {{ owner }}</p>
+<a href="{{ url_for('create_hospital') }}">Create a hospital</a>.</p>
 {% endif %}
-<p><a href="{{ url_for('hospital_edit_owner', id=hospital.id) }}">Change hospital owner account</a></p>
-{% endif %}
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th scope="col">Hospital Name</th>
+      <th scope="col">Address</th>
+      <th scope="col">Contact Info</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for hospital in hospitals %}
+    <tr>
+      <td><a href="{{ url_for('hospital_view', id=hospital.id) }}">{{ hospital.name }}</a></td>
+      <td>{{ hospital.address }}</td>
+      <td>{{ hospital.contact }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1><a href="{{ url_for('hospital') }}"><i class="fas fa-arrow-left"></i></a> {{ hospital.name }} in {{ hospital.address }}</h1>
+
+{% if is_admin(current_user) %}
+{% if owner %}
+<p>Currently owned by {{ owner }}</p>
+{% endif %}
+<p><a href="{{ url_for('hospital_edit_owner', id=hospital.id) }}">Change hospital owner account</a></p>
+{% endif %}
+{% endblock %}

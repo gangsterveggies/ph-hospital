@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
-from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm
+from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm
 from app.models import User, AccountType, Hospital, SupplyType
 from app.helpers import admin_required
 from app.email import send_password_reset_email, send_create_account_email
@@ -9,10 +9,12 @@ from werkzeug.urls import url_parse
 
 @app.route('/')
 @app.route('/index')
-@login_required
 def index():
-  hospitals = Hospital.query.order_by(Hospital.name.asc()).all()
-  return render_template('index.html', title='Home', hospitals=hospitals)
+  return render_template('index.html', title='Home')
+
+#######################################
+## Authentication pages
+#######################################
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -86,11 +88,20 @@ def reset_password(token):
     return redirect(url_for('login'))
   return render_template('reset_password.html', form=form)
 
-@app.route('/hospital/<id>')
-def hospital(id):
+#######################################
+## Hospital related pages
+#######################################
+
+@app.route('/hospital')
+def hospital():
+  hospitals = Hospital.query.order_by(Hospital.name.asc()).all()
+  return render_template('hospital.html', title='List of Hospitals', hospitals=hospitals)
+
+@app.route('/hospital_view/<id>')
+def hospital_view(id):
   hospital = Hospital.query.filter_by(id=id).first_or_404()
   owner = User.query.filter_by(id=hospital.owner_id).first().username if not hospital.owner_id is None else None
-  return render_template('hospital.html', hospital=hospital, owner=owner)
+  return render_template('hospital_view.html', hospital=hospital, owner=owner)
 
 @app.route('/hospital_edit_owner/<id>', methods=['GET', 'POST'])
 @admin_required
@@ -112,6 +123,26 @@ def hospital_edit_owner(id):
     flash('Hospital owner successfully altered', 'success')
     return redirect(url_for('hospital', id=id))
   return render_template('hospital_edit_owner.html', id=id, hospital=hospital, form=form, owner=owner)
+
+@app.route('/create_hospital', methods=['GET', 'POST'])
+@admin_required
+def create_hospital():
+  form = CreateHospitalForm()
+  if form.validate_on_submit():
+    owner_id = User.query.filter_by(username=form.owner.data).first().id if len(form.owner.data) != 0 else None
+    hospital = Hospital(name=form.name.data, location=form.location.data
+                        ,address=form.address.data, region=form.region.data
+                        ,contact=form.contact.data, owner_id=owner_id)
+    db.session.add(hospital)
+    db.session.commit()
+    flash('Added Hospital {}'.format(hospital.name), 'success')
+    return redirect(url_for('hospital'))
+  return render_template('create_hospital.html', title='Create Hospital', form=form)
+
+
+#######################################
+## Supply type related pages
+#######################################
 
 @app.route('/supply_type')
 def supply_type():

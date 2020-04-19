@@ -71,6 +71,7 @@ class Hospital(db.Model):
   name = db.Column(db.String(128), index=True, unique=True)
   location = db.Column(db.String(128))
   address = db.Column(db.String(128))
+  region = db.Column(db.String(128))
   contact = db.Column(db.String(128))
   owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
