@@ -10,13 +10,7 @@ from werkzeug.urls import url_parse
 @app.route('/')
 @app.route('/index')
 def index():
-  donations = []
-  if not current_user.is_anonymous:
-    donations = [{'hospital': donation.hospital.name
-                  ,'supply': donation.donations[0].supply.name
-                  ,'quantity': donation.donations[0].quantity
-                  ,'timestamp': donation.timestamp} for donation in current_user.donations.order_by(DonationGroup.timestamp.desc())]
-  return render_template('index.html', title='Home', donations=donations)
+  return render_template('index.html', title='Home')
 
 #######################################
 ## Authentication pages
@@ -185,3 +179,15 @@ def donate():
     flash('Thank you for your donation!', 'success')
     return redirect(url_for('index'))
   return render_template('donate.html', title='Donate PPE', form=form)
+
+@app.route('/profile')
+@login_required
+def profile():
+  donations = []
+  if not current_user.is_anonymous:
+    donations = [{'hospital': donation.hospital.name
+                  ,'hospital_id': donation.hospital.id
+                  ,'supply': donation.donations[0].supply.name
+                  ,'quantity': donation.donations[0].quantity
+                  ,'timestamp': donation.timestamp} for donation in current_user.donations.order_by(DonationGroup.timestamp.desc())]
+  return render_template('profile.html', title='Profile page', donations=donations)

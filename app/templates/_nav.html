@@ -17,12 +17,6 @@
       <li class="nav-item">
         <a class="nav-link" href="{{ url_for('hospital') }}">Hospitals</a>
       </li>
-      
-      {% if is_admin(current_user) %}
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('create_account') }}">Create account</a>
-      </li>
-      {% endif %}
     </ul>
 
     <ul class="navbar-nav">
@@ -33,7 +27,7 @@
       {% else %}
       <li class="nav-item">
         <span class="navbar-text">
-          Hi, {{ current_user.username }}!
+          Hi, <a href="{{ url_for('profile') }}">{{ current_user.username }}</a>
         </span>
       </li>
       <li class="nav-item">
