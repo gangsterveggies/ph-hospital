@@ -11,6 +11,11 @@ class AccountType(enum.Enum):
   hospital = 3
   volunteer = 4
 
+class OrderStatus(enum.Enum):
+  pending = 1
+  verified = 2
+  received = 3
+
 class User(UserMixin, db.Model):
   id = db.Column(db.Integer, primary_key=True)
   username = db.Column(db.String(64), index=True, unique=True)
@@ -98,6 +103,7 @@ class DonationGroup(db.Model):
   hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'))
   donations = db.relationship('Donation', backref='group', lazy='dynamic')
   timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+  order_status = db.Column(db.Enum(OrderStatus))
 
   def __repr__(self):
     return '<Donation {}>'.format(self.donations)

@@ -1,8 +1,8 @@
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
 from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, DonateForm, SupplyForm
-from app.models import User, AccountType, Hospital, SupplyType, DonationGroup, Donation
+from app.models import User, AccountType, Hospital, SupplyType, DonationGroup, Donation, OrderStatus
 from app.helpers import admin_required
 from app.email import send_password_reset_email, send_create_account_email
 from werkzeug.urls import url_parse
@@ -170,7 +170,7 @@ def donate():
   form = SupplyForm()
   if form.validate_on_submit():
     hospital = Hospital.query.filter_by(name=form.name.data).first()
-    donation = DonationGroup(donor_id=current_user.id, hospital_id=hospital.id)
+    donation = DonationGroup(donor_id=current_user.id, hospital_id=hospital.id, order_status=OrderStatus.pending)
     db.session.add(donation)
     for donation_entry in form.supply_entries.data:
       app.logger.info(donation_entry)
@@ -188,9 +188,24 @@ def profile():
   if not current_user.is_anonymous:
     donation_list = []
     for donation_group in current_user.donations.order_by(DonationGroup.timestamp.desc()):
-      donation_list += [{'hospital': donation_group.hospital.name
-                    ,'hospital_id': donation_group.hospital.id
-                    ,'supply': donation.supply.name
-                    ,'quantity': donation.quantity
-                    ,'timestamp': donation_group.timestamp} for donation in donation_group.donations]
+      app.logger.info(donation_group.order_status)
+      donation_list += [{'id': donation_group.id
+                         ,'hospital': donation_group.hospital.name
+                         ,'hospital_id': donation_group.hospital.id
+                         ,'timestamp': donation_group.timestamp
+                         ,'order_status': donation_group.order_status
+                         ,'donations': [{'supply': donation.supply.name
+                                        ,'quantity': donation.quantity}
+                                       for donation in donation_group.donations]}]
   return render_template('profile.html', title='Profile page', donations=donation_list)
+
+@app.route('/verify_donation', methods=['POST'])
+@admin_required
+def verify_donation():
+  donation = DonationGroup.query.filter_by(id=int(request.form['id'])).first()
+  if donation is None:
+    return jsonify({'success': False})
+  app.logger.info(donation)
+  donation.order_status = OrderStatus.verified
+  db.session.commit()
+  return jsonify({'success': True})

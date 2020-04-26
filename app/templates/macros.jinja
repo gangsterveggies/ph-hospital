@@ -17,3 +17,11 @@
 {% macro submit_button(entry) -%}
   {{ entry(class_='btn btn-primary btn-lg btn-block') }}
 {%- endmacro %}
+
+{% macro order_status(status, index) -%}
+   {% if status.name == 'received' or status.name == 'verified' %}
+     <span id="verify-icon-{{ index }}" class="badge badge-success">{{ status.name }}</span>
+   {% else %}
+     <span id="verify-icon-{{ index }}" class="badge badge-danger">pending</span>
+   {% endif %}
+{%- endmacro %}
