@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
-from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, DonateForm
+from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, DonateForm, SupplyForm
 from app.models import User, AccountType, Hospital, SupplyType, DonationGroup, Donation
 from app.helpers import admin_required
 from app.email import send_password_reset_email, send_create_account_email
@@ -167,14 +167,15 @@ def add_supply_type():
 @app.route('/donate', methods=['GET', 'POST'])
 @login_required
 def donate():
-  form = DonateForm()
+  form = SupplyForm()
   if form.validate_on_submit():
-    app.logger.info('here')
     hospital = Hospital.query.filter_by(name=form.name.data).first()
     donation = DonationGroup(donor_id=current_user.id, hospital_id=hospital.id)
     db.session.add(donation)
-    single_donation = Donation(supply_id=form.supply_type.data, group=donation, quantity=form.quantity.data)
-    db.session.add(single_donation)
+    for donation_entry in form.supply_entries.data:
+      app.logger.info(donation_entry)
+      single_donation = Donation(supply_id=donation_entry['supply_type'], group=donation, quantity=donation_entry['quantity'])
+      db.session.add(single_donation)
     db.session.commit()
     flash('Thank you for your donation!', 'success')
     return redirect(url_for('index'))
@@ -185,9 +186,11 @@ def donate():
 def profile():
   donations = []
   if not current_user.is_anonymous:
-    donations = [{'hospital': donation.hospital.name
-                  ,'hospital_id': donation.hospital.id
-                  ,'supply': donation.donations[0].supply.name
-                  ,'quantity': donation.donations[0].quantity
-                  ,'timestamp': donation.timestamp} for donation in current_user.donations.order_by(DonationGroup.timestamp.desc())]
-  return render_template('profile.html', title='Profile page', donations=donations)
+    donation_list = []
+    for donation_group in current_user.donations.order_by(DonationGroup.timestamp.desc()):
+      donation_list += [{'hospital': donation_group.hospital.name
+                    ,'hospital_id': donation_group.hospital.id
+                    ,'supply': donation.supply.name
+                    ,'quantity': donation.quantity
+                    ,'timestamp': donation_group.timestamp} for donation in donation_group.donations]
+  return render_template('profile.html', title='Profile page', donations=donation_list)

@@ -3,25 +3,38 @@
 {% block content %}
 <div class="row justify-content-md-center">
   <div class="col-md-6">
-    <h1></h1>
+    <h1>Donata PPE</h1>
     <form action="" method="post" novalidate>
       {{ form.hidden_tag() }}
       {{ macros.input(form.name) }}
 
-      <div class="form-group">
-        {{ form.supply_type.label }}
-        <select id="supply-type" name="supply_type" class="form-control {{ valid_class(form.supply_type) }}">
-          {% for subfield in form.supply_type %}
-          {{ subfield }}
-          {% endfor %}
-        </select>
-        {{ macros.error_macro(form.supply_type) }}
+      <div id="supply-entries">
+        {% for supply_type in form.supply_entries %}
+        <div class="supply-entry form-row" data-index="{{ loop.index - 1 }}">
+          <div class="col-md-9 mb-3">
+            {{ supply_type.supply_type.label }}
+            <select id="{{ supply_type.supply_type.name }}" name="{{ supply_type.supply_type.name }}" class="custom-select form-control {{ valid_class(supply_type.supply_type) }}">
+              {% for subfield in supply_type.supply_type %}
+              {{ subfield }}
+              {% endfor %}
+            </select>
+            {{ macros.error_macro(supply_type.supply_type) }}
+          </div>
+          <div class="col-md-2 mb-3">
+            {{ supply_type.quantity.label }}
+            {{ supply_type.quantity(class_='form-control '+ valid_class(supply_type.quantity)) }}
+            {{ macros.error_macro(supply_type.quantity) }}
+          </div>
+        </div>
+        {% endfor %}
       </div>
 
-      {{ macros.input(form.quantity) }}
+      <button type="button" id="add-entry" class="btn btn-outline-info">Add new entry</button>
       
       <p>{{ macros.submit_button(form.submit) }}</p>
     </form>
   </div>
 </div>
+
+<script type=text/javascript src="{{ url_for('static', filename='js/add-donate-entry.js') }}"></script>
 {% endblock %}
