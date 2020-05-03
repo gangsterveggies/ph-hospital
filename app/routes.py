@@ -1,11 +1,12 @@
 from flask import render_template, flash, redirect, url_for, request, jsonify
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
-from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, DonateForm, SupplyForm
-from app.models import User, AccountType, Hospital, SupplyType, DonationGroup, Donation, OrderStatus
-from app.helpers import admin_required
+from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, SupplyForm, RequestForm, ValidateAccountForm
+from app.models import User, AccountType, Hospital, SupplyType, RequestGroup, SingleRequest, RequestStatus, RequestStatusType
+from app.helpers import admin_required, doctor_required, donor_required
 from app.email import send_password_reset_email, send_create_account_email
 from werkzeug.urls import url_parse
+from datetime import datetime
 
 @app.route('/')
 @app.route('/index')
@@ -27,8 +28,11 @@ def login():
       flash('Invalid username or password', 'danger')
       return redirect(url_for('login'))
     login_user(user, remember=True)
-    next_page = request.args.get('next')
-    if not next_page or url_parse(next_page).netloc != '':
+    try:
+      next_page = request.args.get('next')
+      if not next_page or url_parse(next_page).netloc != '':
+        next_page = url_for('index')
+    except:
       next_page = url_for('index')
     return redirect(next_page)
   return render_template('login.html', title='Sign In', form=form)
@@ -56,8 +60,31 @@ def create_account():
     db.session.commit()
     send_create_account_email(user, password)
     flash('Created user {} with password {}'.format(user.username, password), 'success')
-    return redirect(url_for('index'))
+    return redirect(url_for('profile'))
   return render_template('create_account.html', title='Create Account', form=form)
+
+@app.route('/validate_account', methods=['GET', 'POST'])
+@admin_required
+def validate_account():
+  form = ValidateAccountForm()
+  if form.validate_on_submit():
+    user = User.query.filter_by(username=form.username.data).first()
+    if user.account_type == AccountType.doctor:
+      hospital = Hospital.query.filter_by(name=form.hospital.data).first()
+      if hospital is None:
+        flash('Hospital not found', 'danger')
+        return render_template('validate_account.html', title='Validate Account', form=form)
+      user.hospital = hospital
+    user.verified = True
+    for requests in user.requests:
+      for single_request in requests.item_list:
+        single_request.show_donors=True
+        request_status = RequestStatus(status_type=RequestStatusType.looking, single_request=single_request)
+        db.session.add(request_status)
+    db.session.commit()
+    flash('Verified user successfully', 'success')
+    return redirect(url_for('profile'))
+  return render_template('validate_account.html', title='Validate Account', form=form)
 
 @app.route('/reset_password_request', methods=['GET', 'POST'])
 def reset_password_request():
@@ -162,50 +189,126 @@ def add_supply_type():
   return render_template('add_supply_type.html', title='Add PPE', form=form)
 
 #######################################
-## Donation related pages
+## Request pages
 #######################################
-@app.route('/donate', methods=['GET', 'POST'])
-@login_required
-def donate():
-  form = SupplyForm()
+
+@app.route('/request', methods=['GET', 'POST'])
+@doctor_required
+def request():
+  form = RequestForm()
   if form.validate_on_submit():
-    hospital = Hospital.query.filter_by(name=form.name.data).first()
-    donation = DonationGroup(donor_id=current_user.id, hospital_id=hospital.id, order_status=OrderStatus.pending)
-    db.session.add(donation)
-    for donation_entry in form.supply_entries.data:
-      app.logger.info(donation_entry)
-      single_donation = Donation(supply_id=donation_entry['supply_type'], group=donation, quantity=donation_entry['quantity'])
-      db.session.add(single_donation)
+    request = RequestGroup(requester_id=current_user.id)
+    db.session.add(request)
+    for request_entry in form.supply_entries.data:
+      single_request = SingleRequest(supply_id=request_entry['supply_type'], request=request, quantity=request_entry['quantity'], show_donors=False)
+      db.session.add(single_request)
+      request_status = RequestStatus(status_type=RequestStatusType.received, single_request=single_request)
+      db.session.add(request_status)
+      if User.is_verified(current_user):
+        single_request.show_donors=True
+        request_status = RequestStatus(status_type=RequestStatusType.looking, single_request=single_request)
+        db.session.add(request_status)
     db.session.commit()
-    flash('Thank you for your donation!', 'success')
-    return redirect(url_for('index'))
-  return render_template('donate.html', title='Donate PPE', form=form)
+    flash('Your PPE request was successfully processed', 'success')
+    return redirect(url_for('profile'))
+  return render_template('request.html', title='Request PPE', form=form)
+
+#######################################
+## Donor pages
+#######################################
+
+@app.route('/donation_log', methods=['GET', 'POST'])
+@donor_required
+def donation_log():
+  requests = []
+  request_query = SingleRequest.query.filter_by(show_donors=True).order_by(SingleRequest.id.desc())
+  for single_request in request_query:
+    requests.append({'id': single_request.id
+                     ,'requester': single_request.request.requester.username
+                     ,'supply': single_request.supply.name
+                     ,'quantity': single_request.quantity})
+  return render_template('donation_log.html', title='List of requests', requests=requests)
+
+@app.route('/match_donation/<id>', methods=['GET'])
+@donor_required
+def match_donation(id):
+  single_request = SingleRequest.query.filter_by(id=id).first()
+  if single_request is None:
+    flash('Invalid request index', 'danger')
+  else:
+    if single_request.show_donors:
+      request_status = RequestStatus(status_type=RequestStatusType.matched, single_request=single_request)
+      db.session.add(request_status)
+      single_request.show_donors = False
+      single_request.donation_timestamp = datetime.utcnow()
+      single_request.donor = current_user
+      try:
+        db.session.commit()
+        flash('You were successfully matched to the request', 'success')
+      except:
+        db.session.rollback()
+        flash('This request has been fulfilled by another donor', 'danger')
+    else:
+      flash('This request has been fulfilled by another donor', 'danger')
+  return redirect(url_for('donation_log'))
+
+@app.route('/drop_donation/<id>', methods=['GET'])
+@donor_required
+def drop_donation(id):
+  single_request = SingleRequest.query.filter_by(id=id).first()
+  if single_request is None:
+    flash('Invalid request index', 'danger')
+  else:
+    if single_request.donor == current_user:
+      request_status = RequestStatus(status_type=RequestStatusType.looking, single_request=single_request)
+      db.session.add(request_status)
+      single_request.show_donors = True
+      single_request.donor = None
+      db.session.commit()
+      flash('You dropped the PPE request', 'success')
+    else:
+      flash('You don\'t have access to this request', 'danger')
+  return redirect(url_for('profile'))
+
+@app.route('/send_donation/<id>', methods=['GET'])
+@donor_required
+def send_donation(id):
+  single_request = SingleRequest.query.filter_by(id=id).first()
+  if single_request is None:
+    flash('Invalid request index', 'danger')
+  else:
+    if single_request.donor == current_user:
+      request_status = RequestStatus(status_type=RequestStatusType.sent, single_request=single_request)
+      db.session.add(request_status)
+      db.session.commit()
+      flash('You marked the request as sent', 'success')
+    else:
+      flash('You don\'t have access to this request', 'danger')
+  return redirect(url_for('profile'))
+
+#######################################
+## Misc pages
+#######################################
 
 @app.route('/profile')
 @login_required
 def profile():
-  donations = []
-  if not current_user.is_anonymous:
-    donation_list = []
-    for donation_group in current_user.donations.order_by(DonationGroup.timestamp.desc()):
-      app.logger.info(donation_group.order_status)
-      donation_list += [{'id': donation_group.id
-                         ,'hospital': donation_group.hospital.name
-                         ,'hospital_id': donation_group.hospital.id
-                         ,'timestamp': donation_group.timestamp
-                         ,'order_status': donation_group.order_status
-                         ,'donations': [{'supply': donation.supply.name
-                                        ,'quantity': donation.quantity}
-                                       for donation in donation_group.donations]}]
-  return render_template('profile.html', title='Profile page', donations=donation_list)
+  donation_list = []
+  if User.is_donor(current_user):
+    for single_request in current_user.donations.order_by(SingleRequest.donation_timestamp.desc()):
+      donation_list.append({'id': single_request.id
+                            ,'requester': single_request.request.requester.username
+                            ,'supply': single_request.supply.name
+                            ,'quantity': single_request.quantity})
 
-@app.route('/verify_donation', methods=['POST'])
-@admin_required
-def verify_donation():
-  donation = DonationGroup.query.filter_by(id=int(request.form['id'])).first()
-  if donation is None:
-    return jsonify({'success': False})
-  app.logger.info(donation)
-  donation.order_status = OrderStatus.verified
-  db.session.commit()
-  return jsonify({'success': True})
+  request_list = []
+  if User.is_doctor(current_user):
+    for request_group in current_user.requests.order_by(RequestGroup.id.desc()):
+      request_list += [{'id': request_group.id
+                        ,'requested_items': [{'supply': single_request.supply.name
+                                              ,'quantity': single_request.quantity
+                                              ,'status': [{'type': status.status_type.name
+                                                           ,'timestamp': status.timestamp}
+                                                          for status in single_request.status_list]}
+                                             for single_request in request_group.item_list]}]
+  return render_template('profile.html', title='Profile page', donations=donation_list, requests=request_list)

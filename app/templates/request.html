@@ -3,11 +3,9 @@
 {% block content %}
 <div class="row justify-content-md-center">
   <div class="col-md-6">
-    <h1>Donata PPE</h1>
+    <h1>Request PPE</h1>
     <form action="" method="post" novalidate>
       {{ form.hidden_tag() }}
-      {{ macros.input(form.name) }}
-
       <div id="supply-entries">
         {% for supply_type in form.supply_entries %}
         <div class="supply-entry form-row" data-index="{{ loop.index - 1 }}">

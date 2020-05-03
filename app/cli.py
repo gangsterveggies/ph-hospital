@@ -1,7 +1,7 @@
 import click, os
 from faker import Faker
 from app import app, db
-from app.models import User, AccountType, Hospital, SupplyType
+from app.models import User, AccountType, Hospital, SupplyType, RequestStatus, SingleRequest, RequestGroup
 
 @app.cli.command('setup-debug-database')
 def setup_debug_database():
@@ -9,6 +9,7 @@ def setup_debug_database():
     click.echo('Deleting all users and adding default users')
     User.query.delete()
     u = User(username='tim', email='tim@test.com', account_type=AccountType.admin)
+    u.verified = True
     u.set_password('tim')
     db.session.add(u)
 
@@ -18,13 +19,8 @@ def setup_debug_database():
       db.session.add(u)
 
     for i in range(5):
-      u = User(username='hospital' + str(i + 1), email='hospital' + str(i + 1) + '@test.com', account_type=AccountType.hospital)
-      u.set_password('hospital')
-      db.session.add(u)
-
-    for i in range(5):
-      u = User(username='volunteer' + str(i + 1), email='volunteer' + str(i + 1) + '@test.com', account_type=AccountType.volunteer)
-      u.set_password('volunteer')
+      u = User(username='doctor' + str(i + 1), email='doctor' + str(i + 1) + '@test.com', account_type=AccountType.doctor)
+      u.set_password('doctor')
       db.session.add(u)
     
     db.session.commit()
@@ -37,6 +33,12 @@ def setup_debug_database():
     for i in range(10):
       h = Hospital(name=fake.company(), location=f(fake.local_latlng()), address=fake.address(), contact=fake.phone_number())
       db.session.add(h)
+    db.session.commit()
+
+    click.echo('Deleting all donations and request')
+    RequestStatus.query.delete()
+    SingleRequest.query.delete()
+    RequestGroup.query.delete()
     db.session.commit()
   else:
     click.echo('This command only works in debug mode...')

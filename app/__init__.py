@@ -20,6 +20,9 @@ from app import routes, models, errors, helpers
 
 app.jinja_env.globals.update(valid_class=helpers.valid_class)
 app.jinja_env.globals.update(is_admin=models.User.is_admin)
+app.jinja_env.globals.update(is_doctor=models.User.is_doctor)
+app.jinja_env.globals.update(is_donor=models.User.is_donor)
+app.jinja_env.globals.update(is_verified=models.User.is_verified)
 
 if not app.debug:
   if app.config['MAIL_SERVER']:

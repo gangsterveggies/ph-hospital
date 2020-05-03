@@ -5,45 +5,39 @@
 
 <div class="row">
   <div class="col-md-3">
-    <h5 class="card-title">User: {{ current_user.username }}</h5>
+    <h5 class="card-title">User: {{ current_user.username }} {% if is_verified(current_user) %}<i class="fas fa-user-check"></i>{% endif %}</h5>
   </div>
 
   <div class="col-md-9">
     <h2>Your dashboard</h2>
 
     <p>
-      <a href="{{ url_for('donate') }}" class="btn btn-primary btn-lg">Donate PPE</a>
-      {% if is_admin(current_user) %}
-      <a href="{{ url_for('add_supply_type') }}" class="btn btn-primary btn-lg">Add PPE Type</a>
-      <a href="{{ url_for('create_hospital') }}" class="btn btn-primary btn-lg">Add Hospital</a>
-      <a href="{{ url_for('create_account') }}" class="btn btn-primary btn-lg">Create Account</a>
+      {% if is_doctor(current_user) %}
+      <a href="{{ url_for('request') }}" class="btn btn-primary btn-lg">Request PPE</a>
+      {% endif %}
+      {% if is_donor(current_user) %}
+      <a href="{{ url_for('donation_log') }}" class="btn btn-primary btn-lg">Find PPE Requests</a>
       {% endif %}
     </p>
+    {% if is_admin(current_user) %}
+    <p>
+      <a href="{{ url_for('add_supply_type') }}" class="btn btn-primary btn-lg">Add PPE Type</a>
+      <a href="{{ url_for('create_hospital') }}" class="btn btn-primary btn-lg">Add Hospital</a>
+    </p>
+    <p>
+      <a href="{{ url_for('create_account') }}" class="btn btn-primary btn-lg">Create Account</a>
+      <a href="{{ url_for('validate_account') }}" class="btn btn-primary btn-lg">Validate Account</a>
+    </p>
+      {% endif %}
   </div>
 </div>
 
-<h2>My donations:</h2>
+{% if is_doctor(current_user) %}
+{% include '_request_list.html' %}
+{% endif %}
 
-<div class="accordion" id="donation-list">
-  {% for donation_group in donations %}
-  <div class="card">
-    <div class="card-header">
-      <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#collapse-{{ loop.index }}">
-        <i class="fa fa-angle-down" aria-hidden="true"></i>
-      </button>
-      Donation to <a href="{{ url_for('hospital_view', id=donation_group.hospital_id) }}">{{ donation_group.hospital }}</a> on {{ donation_group.timestamp }} {{ macros.order_status(donation_group.order_status, loop.index) }} {% if is_admin(current_user) and donation_group.order_status.name == 'pending' %} <a href="javascript:verify_donation('#verify-icon-{{ loop.index }}', '#verify-link-{{ loop.index }}', {{ donation_group.id }});" id="verify-link-{{ loop.index }}">Mark as verified</a>{% endif %}
-    </div>
-    <div id="collapse-{{ loop.index }}" class="collapse" aria-labelledby="headingThree" data-parent="#donation-list">
-      <div class="card-body">
-        <ul class="mb-0 list-group list-group-flush">
-          {% for donation in donation_group.donations %}
-          <li class="list-group-item">{{ donation.quantity }} units of {{ donation.supply }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-  </div>
-  {% endfor %}
-</div>
+{% if is_donor(current_user) %}
+{% include '_donation_list.html' %}
+{% endif %}
 
 {% endblock %}

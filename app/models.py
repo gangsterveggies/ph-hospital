@@ -8,13 +8,14 @@ from datetime import datetime
 class AccountType(enum.Enum):
   admin = 1
   donor = 2
-  hospital = 3
-  volunteer = 4
+  doctor = 3
 
-class OrderStatus(enum.Enum):
-  pending = 1
-  verified = 2
-  received = 3
+class RequestStatusType(enum.Enum):
+  requested = 1 # PPE Requested
+  looking = 2   # Looking for Donors
+  matched = 3   # Donor matched
+  sent = 4      # Item on the way
+  received = 5  # Item received
 
 class User(UserMixin, db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -22,8 +23,10 @@ class User(UserMixin, db.Model):
   email = db.Column(db.String(120), index=True, unique=True)
   password_hash = db.Column(db.String(128))
   account_type = db.Column(db.Enum(AccountType))
+  verified = db.Column(db.Boolean, default=False)
   hospital = db.relationship('Hospital', uselist=False, backref='owner')
-  donations = db.relationship('DonationGroup', backref='donor', lazy='dynamic')
+  requests = db.relationship('RequestGroup', backref='requester', lazy='dynamic')
+  donations = db.relationship('SingleRequest', backref='donor', lazy='dynamic')
 
   def set_password(self, password):
     self.password_hash = generate_password_hash(password)
@@ -43,6 +46,22 @@ class User(UserMixin, db.Model):
   def is_admin(u):
     return u.is_authenticated and u.account_type == AccountType.admin
 
+  @staticmethod
+  def is_doctor(u):
+    return u.is_authenticated and (
+      u.account_type == AccountType.admin or
+      u.account_type == AccountType.doctor)
+
+  @staticmethod
+  def is_donor(u):
+    return u.is_authenticated and (
+      u.account_type == AccountType.admin or
+      u.account_type == AccountType.donor) and u.verified
+
+  @staticmethod
+  def is_verified(u):
+    return u.is_authenticated and u.verified
+  
   @staticmethod
   def verify_reset_password_token(token):
     try:
@@ -69,7 +88,7 @@ class SupplyType(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(64), index=True, unique=True)
   info = db.Column(db.String(128))
-  donations = db.relationship('Donation', backref='supply', lazy='dynamic')
+  requests = db.relationship('SingleRequest', backref='supply', lazy='dynamic')
 
   def __repr__(self):
     return '<SupplyType {}>'.format(self.name)
@@ -82,28 +101,34 @@ class Hospital(db.Model):
   region = db.Column(db.String(128))
   contact = db.Column(db.String(128))
   owner_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-  donations = db.relationship('DonationGroup', backref='hospital', lazy='dynamic')
 
   def __repr__(self):
     return '<Hospital {}>'.format(self.name)
 
-class Donation(db.Model):
+class RequestStatus(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  status_type = db.Column(db.Enum(RequestStatusType))
+  timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+  request_id = db.Column(db.Integer, db.ForeignKey('single_request.id'))
+
+class SingleRequest(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   supply_id = db.Column(db.Integer, db.ForeignKey('supply_type.id'))
-  group_id =  db.Column(db.Integer, db.ForeignKey('donation_group.id'))
+  group_id = db.Column(db.Integer, db.ForeignKey('request_group.id'))
   quantity = db.Column(db.Integer)
+  show_donors = db.Column(db.Boolean)
+  donor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+  donation_timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+  status_list = db.relationship('RequestStatus', backref='single_request', lazy='dynamic')
 
   def __repr__(self):
     supply = SupplyType.query.filter_by(id=self.supply_id).first()
-    return '<DonationSingle {}x{}>'.format(supply.name, self.quantity)
-  
-class DonationGroup(db.Model):
+    return '<RequestSingle {}x{}>'.format(supply.name, self.quantity)
+
+class RequestGroup(db.Model):
   id = db.Column(db.Integer, primary_key=True)
-  donor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-  hospital_id = db.Column(db.Integer, db.ForeignKey('hospital.id'))
-  donations = db.relationship('Donation', backref='group', lazy='dynamic')
-  timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-  order_status = db.Column(db.Enum(OrderStatus))
+  requester_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+  item_list = db.relationship('SingleRequest', backref='request', lazy='dynamic')
 
   def __repr__(self):
-    return '<Donation {}>'.format(self.donations)
+    return '<Request {}>'.format(self.item_list.all())

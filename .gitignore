@@ -39,5 +39,7 @@ venv
 app.db
 ph_hospital.log*
 
+tmp/*
+
 # Emacs files
 *~

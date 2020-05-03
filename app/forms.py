@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
 from wtforms import Form, StringField, PasswordField, SubmitField, RadioField, SelectField, IntegerField, FormField, FieldList
 from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, NumberRange
-from app.models import User, SupplyType, Hospital
+from app.models import User, AccountType, SupplyType, Hospital
 
 class LoginForm(FlaskForm):
   username = StringField('Username', validators=[DataRequired()])
@@ -11,7 +11,7 @@ class LoginForm(FlaskForm):
 class CreateAccountForm(FlaskForm):
   username = StringField('Username', validators=[DataRequired()])
   email = StringField('Email', validators=[DataRequired(), Email()])
-  account_type = RadioField('Account Type', choices=[('admin', 'Admin'), ('donor', 'Donor'), ('hospital', 'Hospital'), ('volunteer', 'Volunteer')], validators=[DataRequired()])
+  account_type = RadioField('Account Type', choices=[('admin', 'Admin'), ('donor', 'Donor'), ('doctor', 'Doctor')], validators=[DataRequired()])
   submit = SubmitField('Register')
 
   def validate_username(self, username):
@@ -23,6 +23,16 @@ class CreateAccountForm(FlaskForm):
     user = User.query.filter_by(email=email.data).first()
     if user is not None:
       raise ValidationError('Please use a different email address.')
+
+class ValidateAccountForm(FlaskForm):
+  username = StringField('Username', validators=[DataRequired()])
+  hospital = StringField('Hospital')
+  submit = SubmitField('Register')
+
+  def validate_username(self, username):
+    user = User.query.filter_by(username=username.data).first()
+    if user is None:
+      raise ValidationError('Username not found.')
 
 class ResetPasswordRequestForm(FlaskForm):
   email = StringField('Email', validators=[DataRequired(), Email()])
@@ -91,19 +101,10 @@ class SupplyForm(FlaskForm):
     hospital = Hospital.query.filter_by(name=name.data).first()
     if hospital is None:
       raise ValidationError('Hospital not found.')
-    
-class DonateForm(FlaskForm):
-  name = StringField('Hospital Name', validators=[DataRequired()])
-  supply_type = SelectField('PPE Type', choices=[(s.id, s.name) for s in SupplyType.query.order_by('name')], coerce=int)
-  quantity = IntegerField('Quantity', validators=[DataRequired()])
+
+class RequestForm(FlaskForm):
+  supply_entries = FieldList(FormField(SupplyEntryForm), min_entries=1, max_entries=10)
+  submit = SubmitField('Request PPE')
+
+class DonateSingleForm(FlaskForm):
   submit = SubmitField('Donate')
-
-  def validate_name(self, name):
-    hospital = Hospital.query.filter_by(name=name.data).first()
-    if hospital is None:
-      raise ValidationError('Hospital not found.')
-
-  def validate_supply_type(self, supply_type):
-    supply = SupplyType.query.filter_by(id=supply_type.data).first()
-    if supply is None:
-      raise ValidationError('Invalid PPE type.')

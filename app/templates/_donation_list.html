@@ -1,0 +1,7 @@
+<h2>My donations:</h2>
+
+<ul class="mb-0 list-group list-group-flush">
+  {% for item in donations %}
+  <li class="list-group-item">Donate to {{ item.requester }} {{ item.quantity }} units of {{ item.supply }} <a href="{{ url_for('drop_donation', id=item.id) }}">(Drop)</a> <a href="{{ url_for('send_donation', id=item.id) }}">(Send)</a></li>
+  {% endfor %}
+</ul>
