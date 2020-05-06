@@ -1,0 +1,23 @@
+<div class="modal fade" id="donation-item-{{ loop.index }}" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <form action="" method="post" novalidate>
+        <input type="hidden" name="form-name" value="{{ item.id }}">
+        {{ item.form.hidden_tag() }}
+        <div class="modal-header">
+          <h5 class="modal-title">Send items</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          {{ macros.input(item.form.quantity, error=False) }}
+        </div>
+        <div class="modal-footer">
+          {{ macros.small_submit_button(item.form.submit) }}
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
