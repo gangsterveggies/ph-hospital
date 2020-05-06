@@ -6,16 +6,24 @@
 {% endfor %}
 {%- endmacro %}
 
-{% macro input(entry, size=32, placeholder='') -%}
+{% macro input(entry, error=True, size=32, placeholder='') -%}
   <div class="form-group">
     {{ entry.label }}
-    {{ entry(size=size, class_='form-control '+ valid_class(entry), placeholder=placeholder) }}
-    {{ error_macro(entry) }}
+    {% if error %}
+      {{ entry(size=size, class_='form-control '+ valid_class(entry), placeholder=placeholder) }}
+      {{ error_macro(entry) }}
+    {% else %}
+      {{ entry(size=size, class_='form-control', placeholder=placeholder) }}
+    {% endif %}
   </div>
 {%- endmacro %}
 
 {% macro submit_button(entry) -%}
   {{ entry(class_='btn btn-primary btn-lg btn-block') }}
+{%- endmacro %}
+
+{% macro small_submit_button(entry) -%}
+  {{ entry(class_='btn btn-primary') }}
 {%- endmacro %}
 
 {% macro order_status(status, index) -%}

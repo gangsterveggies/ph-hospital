@@ -15,7 +15,7 @@ class RequestStatusType(enum.Enum):
   looking = 2   # Looking for Donors
   matched = 3   # Donor matched
   sent = 4      # Item on the way
-  received = 5  # Item received
+  completed = 5 # Order completed
 
 class User(UserMixin, db.Model):
   id = db.Column(db.Integer, primary_key=True)
@@ -108,6 +108,7 @@ class Hospital(db.Model):
 class RequestStatus(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   status_type = db.Column(db.Enum(RequestStatusType))
+  units = db.Column(db.Integer)
   timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
   request_id = db.Column(db.Integer, db.ForeignKey('single_request.id'))
 
@@ -116,9 +117,12 @@ class SingleRequest(db.Model):
   supply_id = db.Column(db.Integer, db.ForeignKey('supply_type.id'))
   group_id = db.Column(db.Integer, db.ForeignKey('request_group.id'))
   quantity = db.Column(db.Integer)
+  fulfilled = db.Column(db.Integer)
+  completed = db.Column(db.Boolean, default=False)
   show_donors = db.Column(db.Boolean)
   donor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   donation_timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+  current_status = db.Column(db.Enum(RequestStatusType))
   status_list = db.relationship('RequestStatus', backref='single_request', lazy='dynamic')
 
   def __repr__(self):

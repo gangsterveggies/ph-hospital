@@ -108,3 +108,9 @@ class RequestForm(FlaskForm):
 
 class DonateSingleForm(FlaskForm):
   submit = SubmitField('Donate')
+
+def SendSuppliesForm(prefix, maxRange):
+  class TempForm(FlaskForm):
+    submit = SubmitField('Send Units')
+  setattr(TempForm, 'quantity', IntegerField('Quantity (at most {})'.format(maxRange), validators=[DataRequired(), NumberRange(min=1, max=maxRange)]))
+  return TempForm(prefix=prefix)

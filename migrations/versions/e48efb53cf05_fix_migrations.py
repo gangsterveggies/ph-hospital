@@ -70,7 +70,7 @@ def upgrade():
     op.create_index(op.f('ix_single_request_donation_timestamp'), 'single_request', ['donation_timestamp'], unique=False)
     op.create_table('request_status',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('status_type', sa.Enum('requested', 'looking', 'matched', 'sent', 'received', name='requeststatustype'), nullable=True),
+    sa.Column('status_type', sa.Enum('requested', 'looking', 'matched', 'sent', 'completed', name='requeststatustype'), nullable=True),
     sa.Column('timestamp', sa.DateTime(), nullable=True),
     sa.Column('request_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['request_id'], ['single_request.id'], ),

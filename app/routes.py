@@ -1,7 +1,8 @@
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask import render_template, flash, redirect, url_for, jsonify
+from flask import request as flask_request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
-from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, SupplyForm, RequestForm, ValidateAccountForm
+from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, SupplyForm, RequestForm, ValidateAccountForm, SendSuppliesForm
 from app.models import User, AccountType, Hospital, SupplyType, RequestGroup, SingleRequest, RequestStatus, RequestStatusType
 from app.helpers import admin_required, doctor_required, donor_required
 from app.email import send_password_reset_email, send_create_account_email
@@ -28,11 +29,8 @@ def login():
       flash('Invalid username or password', 'danger')
       return redirect(url_for('login'))
     login_user(user, remember=True)
-    try:
-      next_page = request.args.get('next')
-      if not next_page or url_parse(next_page).netloc != '':
-        next_page = url_for('index')
-    except:
+    next_page = flask_request.args.get('next')
+    if not next_page or url_parse(next_page).netloc != '':
       next_page = url_for('index')
     return redirect(next_page)
   return render_template('login.html', title='Sign In', form=form)
@@ -202,7 +200,7 @@ def request():
     for request_entry in form.supply_entries.data:
       single_request = SingleRequest(supply_id=request_entry['supply_type'], request=request, quantity=request_entry['quantity'], show_donors=False)
       db.session.add(single_request)
-      request_status = RequestStatus(status_type=RequestStatusType.received, single_request=single_request)
+      request_status = RequestStatus(status_type=RequestStatusType.requested, single_request=single_request)
       db.session.add(request_status)
       if User.is_verified(current_user):
         single_request.show_donors=True
@@ -217,7 +215,7 @@ def request():
 ## Donor pages
 #######################################
 
-@app.route('/donation_log', methods=['GET', 'POST'])
+@app.route('/donation_log', methods=['GET'])
 @donor_required
 def donation_log():
   requests = []
@@ -252,6 +250,7 @@ def match_donation(id):
       flash('This request has been fulfilled by another donor', 'danger')
   return redirect(url_for('donation_log'))
 
+# https://github.com/lepture/flask-wtf/issues/182
 @app.route('/drop_donation/<id>', methods=['GET'])
 @donor_required
 def drop_donation(id):
@@ -290,16 +289,53 @@ def send_donation(id):
 ## Misc pages
 #######################################
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
   donation_list = []
+  donation_index = {}
   if User.is_donor(current_user):
     for single_request in current_user.donations.order_by(SingleRequest.donation_timestamp.desc()):
-      donation_list.append({'id': single_request.id
+      if not single_request.completed:
+        form = SendSuppliesForm(str(single_request.id), single_request.quantity - (single_request.fulfilled or 0))
+        app.logger.info(single_request.quantity - (single_request.fulfilled or 0))
+        donation_index[single_request.id] = form
+        donation_list.append({'id': single_request.id
                             ,'requester': single_request.request.requester.username
                             ,'supply': single_request.supply.name
-                            ,'quantity': single_request.quantity})
+                            ,'quantity': single_request.quantity
+                            ,'fulfilled': single_request.fulfilled
+                            ,'completed': single_request.completed
+                            ,'form': form})
+      else:
+        donation_list.append({'id': single_request.id
+                            ,'requester': single_request.request.requester.username
+                            ,'supply': single_request.supply.name
+                            ,'quantity': single_request.quantity
+                            ,'completed': single_request.completed})
+
+  if flask_request.method == 'POST':    
+    try:
+      form_name = flask_request.form['form-name']
+      form = donation_index[int(form_name)]
+      if form.submit.data and form.validate_on_submit():
+        single_request = SingleRequest.query.filter_by(id=form_name).first()
+        single_request.fulfilled = int(form.quantity.data) + (single_request.fulfilled or 0)
+        request_status = RequestStatus(status_type=RequestStatusType.sent, single_request=single_request, units=int(form.quantity.data))
+        db.session.add(request_status)
+        if single_request.fulfilled == single_request.quantity:
+          single_request.completed = True
+          request_status = RequestStatus(status_type=RequestStatusType.completed, single_request=single_request)
+          db.session.add(request_status)
+        db.session.commit()
+        flash("You marked more {} units as sent".format(form.quantity.data), 'success')
+        return redirect(url_for('profile'))
+      else:
+        flash('Number of units out of range', 'danger')
+        return redirect(url_for('profile'))
+    except:
+      flash('Invalid operation', 'danger')
+      return redirect(url_for('profile'))
 
   request_list = []
   if User.is_doctor(current_user):
