@@ -9,7 +9,7 @@
       </div>
       <div class="modal-body">
         {% for status in item.status %}
-        <p>{{ status.type }} at {{ status.timestamp }}</p>
+        <p>{{ status.type }} at {{ moment(status.timestamp).format('LLL') }}</p>
         {% endfor %}
       </div>
       <div class="modal-footer">
