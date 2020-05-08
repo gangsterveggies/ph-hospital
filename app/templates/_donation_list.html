@@ -2,7 +2,7 @@
 
 <ul class="mb-0 list-group list-group-flush">
   {% for item in donations %}
-  <li class="list-group-item">Donate to {{ item.requester }} {{ item.quantity }} units of {{ item.supply }} {% if not item.completed %}<a href="{{ url_for('drop_donation', id=item.id) }}">(Remove)</a> <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#donation-item-{{ loop.index }}">Send</button>{% else %}<span class="badge badge-success">Completed</span>{% endif %}</li>
+  <li class="list-group-item">Donate to {{ macros.user_link(item.requester) }} {{ item.quantity }} units of {{ item.supply }} {% if not item.completed %}<a href="{{ url_for('drop_donation', id=item.id) }}">(Remove)</a> <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#donation-item-{{ loop.index }}">Send</button>{% else %}<span class="badge badge-success">Completed</span>{% endif %}</li>
   {% if not item.completed %}
   {% include '_send_modal.html' %}
   {% endif %}

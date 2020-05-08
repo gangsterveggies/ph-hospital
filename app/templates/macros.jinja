@@ -33,3 +33,11 @@
      <span id="verify-icon-{{ index }}" class="badge badge-danger">pending</span>
    {% endif %}
 {%- endmacro %}
+
+{% macro user_link(username) -%}
+  <span class="user_popup">
+    <a href="#">
+      {{ username }}
+    </a>
+  </span>
+{%- endmacro %}
