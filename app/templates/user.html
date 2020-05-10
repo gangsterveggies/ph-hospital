@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h4>User: {{ user.username }} {{ macros.verified_icon(user, verifications, self_verified) }}</h4>
+{% if form %}
+  <form action="" method="post" novalidate>
+    {{ form.hidden_tag() }}
+    {{ form.submit(class_='btn btn-primary mb-2') }}
+  </form>
+{% endif %}
+  
+<p>{{ user.email }}</p>
+{% if user.hospital %}
+<p>From {{ user.hospital.name }}</p>
+{% endif %}
+
+{% set user = current_user %}
+{% include '_request_list.html' %}
+
+{% endblock %}

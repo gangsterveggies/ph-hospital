@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, jsonify
 from flask import request as flask_request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
-from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, SupplyForm, RequestForm, ValidateAccountForm, SendSuppliesForm
+from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, SupplyForm, RequestForm, VerifyAccountForm, SendSuppliesForm
 from app.models import User, AccountType, Hospital, SupplyType, RequestGroup, SingleRequest, RequestStatus, RequestStatusType
 from app.helpers import admin_required, doctor_required, donor_required
 from app.email import send_password_reset_email, send_create_account_email
@@ -60,29 +60,6 @@ def create_account():
     flash('Created user {} with password {}'.format(user.username, password), 'success')
     return redirect(url_for('profile'))
   return render_template('create_account.html', title='Create Account', form=form)
-
-@app.route('/validate_account', methods=['GET', 'POST'])
-@admin_required
-def validate_account():
-  form = ValidateAccountForm()
-  if form.validate_on_submit():
-    user = User.query.filter_by(username=form.username.data).first()
-    if user.account_type == AccountType.doctor:
-      hospital = Hospital.query.filter_by(name=form.hospital.data).first()
-      if hospital is None:
-        flash('Hospital not found', 'danger')
-        return render_template('validate_account.html', title='Validate Account', form=form)
-      user.hospital = hospital
-    user.verified = True
-    for requests in user.requests:
-      for single_request in requests.item_list:
-        single_request.show_donors=True
-        request_status = RequestStatus(status_type=RequestStatusType.looking, single_request=single_request)
-        db.session.add(request_status)
-    db.session.commit()
-    flash('Verified user successfully', 'success')
-    return redirect(url_for('profile'))
-  return render_template('validate_account.html', title='Validate Account', form=form)
 
 @app.route('/reset_password_request', methods=['GET', 'POST'])
 def reset_password_request():
@@ -194,11 +171,13 @@ def add_supply_type():
 @doctor_required
 def request():
   form = RequestForm()
+  for subform in form.supply_entries:
+    subform.supply_type.choices = [(s.id, s.name) for s in SupplyType.query.order_by('name')]
   if form.validate_on_submit():
     request = RequestGroup(requester_id=current_user.id)
     db.session.add(request)
     for request_entry in form.supply_entries.data:
-      single_request = SingleRequest(supply_id=request_entry['supply_type'], request=request, quantity=request_entry['quantity'], show_donors=False)
+      single_request = SingleRequest(supply_id=request_entry['supply_type'], request=request, quantity=request_entry['quantity'], custom_info=request_entry['custom_info'], show_donors=False)
       db.session.add(single_request)
       request_status = RequestStatus(status_type=RequestStatusType.requested, single_request=single_request)
       db.session.add(request_status)
@@ -286,11 +265,37 @@ def send_donation(id):
   return redirect(url_for('profile'))
 
 #######################################
-## Misc pages
+## User pages
 #######################################
 
+@app.route('/user/<username>', methods=['GET', 'POST'])
+@donor_required
+def user_page(username):
+  user = User.query.filter_by(username=username).first_or_404()
+  verifications = user.verified.limit(3).all()
+  self_verified = user.is_verified_by(current_user)
+  if user.username == current_user.username:
+    return redirect(url_for('profile'))
+  if user.account_type == AccountType.doctor and not self_verified:
+    form = VerifyAccountForm()
+    if form.validate_on_submit():
+      user.verified_tag = True
+      current_user.verify(user)
+      for requests in user.requests:
+        for single_request in requests.item_list:
+          single_request.show_donors=True
+          request_status = RequestStatus(status_type=RequestStatusType.looking, single_request=single_request)
+          db.session.add(request_status)
+      db.session.commit()
+      flash('Verified {} successfully'.format(username), 'success')
+      return redirect(url_for('user_page', username=username))
+    else:
+      return render_template('user.html', title='User {}'.format(username), user=user, form=form, verifications=verifications, self_verified=self_verified)
+  else:
+    return render_template('user.html', title='User {}'.format(username), user=user, verifications=verifications, self_verified=self_verified)
+
 @app.route('/user/<username>/popup')
-@login_required
+@donor_required
 def user_popup(username):
   user = User.query.filter_by(username=username).first_or_404()
   return render_template('user_popup.html', user=user)
@@ -310,6 +315,7 @@ def profile():
                             ,'requester': single_request.request.requester.username
                             ,'supply': single_request.supply.name
                             ,'quantity': single_request.quantity
+                            ,'custom_info': single_request.custom_info
                             ,'fulfilled': single_request.fulfilled
                             ,'completed': single_request.completed
                             ,'form': form})
@@ -318,6 +324,7 @@ def profile():
                             ,'requester': single_request.request.requester.username
                             ,'supply': single_request.supply.name
                             ,'quantity': single_request.quantity
+                            ,'custom_info': single_request.custom_info
                             ,'completed': single_request.completed})
 
   if flask_request.method == 'POST':    
@@ -349,8 +356,12 @@ def profile():
       request_list += [{'id': request_group.id
                         ,'requested_items': [{'supply': single_request.supply.name
                                               ,'quantity': single_request.quantity
+                                              ,'custom_info': single_request.custom_info
                                               ,'status': [{'type': status.status_type.name
                                                            ,'timestamp': status.timestamp}
                                                           for status in single_request.status_list]}
                                              for single_request in request_group.item_list]}]
-  return render_template('profile.html', title='Profile page', donations=donation_list, requests=request_list)
+
+  verifications = current_user.verified.limit(3).all()
+
+  return render_template('profile.html', title='Profile page', donations=donation_list, requests=request_list, verifications=verifications)

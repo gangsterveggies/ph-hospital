@@ -31,7 +31,6 @@ def upgrade():
     sa.Column('email', sa.String(length=120), nullable=True),
     sa.Column('password_hash', sa.String(length=128), nullable=True),
     sa.Column('account_type', sa.Enum('admin', 'donor', 'doctor', name='accounttype'), nullable=True),
-    sa.Column('verified', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)

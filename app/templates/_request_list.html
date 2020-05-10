@@ -1,25 +1,36 @@
-<h2>My PPE requests:</h2>
+{% if requests|length > 0%}
+  <h2>PPE requests:</h2>
 
-<div class="accordion" id="request-list">
-  {% for request_group in requests %}
-  {% set outer_loop = loop %}
-  <div class="card">
-    <div class="card-header">
-      <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#request-collapse-{{ loop.index }}">
-        <i class="fa fa-angle-down" aria-hidden="true"></i>
-      </button>
-      Requested 
-    </div>
-    <div id="request-collapse-{{ loop.index }}" class="collapse" data-parent="#request-list">
-      <div class="card-body">
-        <ul class="mb-0 list-group list-group-flush">
-          {% for item in request_group.requested_items %}
-          <li class="list-group-item">{{ item.quantity }} units of {{ item.supply }} <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#request-item-{{ outer_loop.index }}-{{ loop.index }}">Check Status</button></li>
-          {% include '_status_modal.html' %}
-          {% endfor %}
-        </ul>
+  <div class="accordion" id="request-list">
+    {% for request_group in requests %}
+    {% set outer_loop = loop %}
+    <div class="card">
+      <div class="card-header">
+        <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#request-collapse-{{ loop.index }}">
+          <i class="fa fa-angle-down" aria-hidden="true"></i>
+        </button>
+        Requested 
+      </div>
+      <div id="request-collapse-{{ loop.index }}" class="collapse" data-parent="#request-list">
+        <div class="card-body">
+          <ul class="mb-0 list-group list-group-flush">
+            {% for item in request_group.requested_items %}
+            <li class="list-group-item">
+              {{ item.quantity }} units of {{ item.supply }}
+              {% if item.custom_info %}
+              <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#custom-item-{{ outer_loop.index }}-{{ loop.index }}">Customization</button>
+              {% endif %}
+              <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#request-item-{{ outer_loop.index }}-{{ loop.index }}">Check Status</button>
+            </li>
+            {% if item.custom_info %}
+            {% include '_custom_modal.html' %}
+            {% endif %}
+            {% include '_status_modal.html' %}
+            {% endfor %}
+          </ul>
+        </div>
       </div>
     </div>
+    {% endfor %}
   </div>
-  {% endfor %}
-</div>
+{% endif %}

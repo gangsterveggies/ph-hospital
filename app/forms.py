@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import Form, StringField, PasswordField, SubmitField, RadioField, SelectField, IntegerField, FormField, FieldList
-from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, NumberRange
+from wtforms import Form, StringField, PasswordField, SubmitField, RadioField, SelectField, IntegerField, FormField, FieldList, BooleanField, TextAreaField
+from wtforms.validators import ValidationError, DataRequired, Email, EqualTo, NumberRange, Length
 from app.models import User, AccountType, SupplyType, Hospital
 
 class LoginForm(FlaskForm):
@@ -24,15 +24,8 @@ class CreateAccountForm(FlaskForm):
     if user is not None:
       raise ValidationError('Please use a different email address.')
 
-class ValidateAccountForm(FlaskForm):
-  username = StringField('Username', validators=[DataRequired()])
-  hospital = StringField('Hospital')
-  submit = SubmitField('Register')
-
-  def validate_username(self, username):
-    user = User.query.filter_by(username=username.data).first()
-    if user is None:
-      raise ValidationError('Username not found.')
+class VerifyAccountForm(FlaskForm):
+  submit = SubmitField('Verify User')
 
 class ResetPasswordRequestForm(FlaskForm):
   email = StringField('Email', validators=[DataRequired(), Email()])
@@ -84,8 +77,9 @@ class CreateHospitalForm(FlaskForm):
       raise ValidationError('There already is a hospital with that name.')
 
 class SupplyEntryForm(Form):
-  supply_type = SelectField('PPE Type', choices=[(s.id, s.name) for s in SupplyType.query.order_by('name')], coerce=int)
+  supply_type = SelectField('PPE Type', coerce=int)
   quantity = IntegerField('Quantity', [DataRequired(), NumberRange(min=1)])
+  custom_info = TextAreaField('Customization', [Length(max=500)])
 
   def validate_supply_type(self, supply_type):
     supply = SupplyType.query.filter_by(id=supply_type.data).first()

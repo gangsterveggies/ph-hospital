@@ -18,6 +18,22 @@
   </div>
 {%- endmacro %}
 
+{% macro input_side(entry, error=True, size=32, placeholder='') -%}
+  <div class="form-row">
+    <div class="col-md-3 mb-3">
+      {{ entry.label }}
+    </div>
+    <div class="col-md-9 mb-3">
+      {% if error %}
+        {{ entry(size=size, class_='form-control '+ valid_class(entry), placeholder=placeholder) }}
+        {{ error_macro(entry) }}
+      {% else %}
+        {{ entry(size=size, class_='form-control', placeholder=placeholder) }}
+      {% endif %}
+    </div>
+  </div>
+{%- endmacro %}
+
 {% macro submit_button(entry) -%}
   {{ entry(class_='btn btn-primary btn-lg btn-block') }}
 {%- endmacro %}
@@ -36,8 +52,28 @@
 
 {% macro user_link(username) -%}
   <span class="user_popup">
-    <a href="#">
+    <a href="{{ url_for('user_page', username=username) }}">
       {{ username }}
     </a>
   </span>
+{%- endmacro %}
+
+{% macro verified_icon(user, verification_list, self_verified=False) -%}
+ {% if is_verified(user) %}
+   <button type="button" class="close float-none" data-placement="right" data-toggle="tooltip" title="{{ verified_text(verification_list) }}">
+     <i class="fas fa-user-check {% if self_verified %}self_verified{% endif %}"></i>
+   </button>
+ {% endif %}
+{%- endmacro %}
+
+{% macro verified_text(verification_list) -%}
+  {% if verification_list|length == 0 %}
+    Verified user
+  {% elif verification_list|length == 1 %}
+    Verified by {{ verification_list[0].username }}.
+  {% elif verification_list|length == 2 %}
+    Verified by {{ verification_list[0].username }} and {{ verification_list[1].username }}.
+  {% else %}
+    Verified by {{ verification_list[0].username }}, {{ verification_list[1].username }} and more.
+  {% endif %}
 {%- endmacro %}

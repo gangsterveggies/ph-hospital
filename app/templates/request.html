@@ -9,7 +9,7 @@
       <div id="supply-entries">
         {% for supply_type in form.supply_entries %}
         <div class="supply-entry form-row" data-index="{{ loop.index - 1 }}">
-          <div class="col-md-9 mb-3">
+          <div class="col-md-9 mb-2">
             {{ supply_type.supply_type.label }}
             <select id="{{ supply_type.supply_type.name }}" name="{{ supply_type.supply_type.name }}" class="custom-select form-control {{ valid_class(supply_type.supply_type) }}">
               {% for subfield in supply_type.supply_type %}
@@ -18,15 +18,19 @@
             </select>
             {{ macros.error_macro(supply_type.supply_type) }}
           </div>
-          <div class="col-md-2 mb-3">
+          <div class="col-md-2 mb-2">
             {{ supply_type.quantity.label }}
             {{ supply_type.quantity(class_='form-control '+ valid_class(supply_type.quantity)) }}
             {{ macros.error_macro(supply_type.quantity) }}
           </div>
+          
+          <div class="col-md-11 mb-3">
+            {{ supply_type.custom_info(class='form-control ' + valid_class(supply_type.custom_info), rows='1', placeholder='PPE Specifications') }}
+            {{ macros.error_macro(supply_type.custom_info) }}
+          </div>
         </div>
         {% endfor %}
       </div>
-
       <button type="button" id="add-entry" class="btn btn-outline-info">Add new entry</button>
       
       <p>{{ macros.submit_button(form.submit) }}</p>

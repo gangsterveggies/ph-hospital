@@ -42,7 +42,6 @@ function adjustIndices(removedIndex) {
  * Remove a subform.
  */
 function removeForm() {
-  console.log("here");
   var $removedForm = $(this).closest('.supply-entry');
   var removedIndex = parseInt($removedForm.data('index'));
 
@@ -66,8 +65,8 @@ function addForm() {
     newIndex = parseInt($lastForm.data('index')) + 1;
   }
 
-  // Maximum of 10 subforms
-  if (newIndex > 9) {
+  // Maximum of 20 subforms
+  if (newIndex > 19) {
     console.log('[WARNING] Reached maximum number of elements');
     return;
   }
@@ -89,7 +88,9 @@ function addForm() {
   $newForm.find('input').each(function(idx) {
     var $item = $(this);
     $item.attr('id', $item.attr('id').replace('0', newIndex));
-    $item.attr('name', $item.attr('name').replace('0', newIndex));
+    if ($item.attr('type') === 'text') {
+      $item.attr('name', $item.attr('name').replace('0', newIndex));
+    }
     $item.val('');
   });
 
@@ -100,7 +101,6 @@ function addForm() {
   $('#supply-entries').append($newForm);
   $newForm.find('.remove-entry').click(removeForm);
 }
-
 
 $(document).ready(function() {
   $('#add-entry').click(addForm);

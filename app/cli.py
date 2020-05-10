@@ -1,7 +1,7 @@
 import click, os
 from faker import Faker
 from app import app, db
-from app.models import User, AccountType, Hospital, SupplyType, RequestStatus, SingleRequest, RequestGroup
+from app.models import User, AccountType, Hospital, SupplyType, RequestStatus, SingleRequest, RequestGroup, verifications
 
 @app.cli.command('setup-debug-database')
 def setup_debug_database():
@@ -9,7 +9,7 @@ def setup_debug_database():
     click.echo('Deleting all users and adding default users')
     User.query.delete()
     u = User(username='tim', email='tim@test.com', account_type=AccountType.admin)
-    u.verified = True
+    u.verified_tag = True
     u.set_password('tim')
     db.session.add(u)
 
@@ -31,7 +31,7 @@ def setup_debug_database():
     fake = Faker()
     f = lambda x : str(x[0]) + " " + str(x[1])
     for i in range(10):
-      h = Hospital(name=fake.company(), location=f(fake.local_latlng()), address=fake.address(), contact=fake.phone_number())
+      h = Hospital(name=(fake.city() + " Hospital"), location=f(fake.local_latlng()), address=fake.address(), contact=fake.phone_number())
       db.session.add(h)
     db.session.commit()
 
@@ -48,6 +48,7 @@ def add_base_ppes():
   if app.debug:
     click.echo('Deleting all current PPEs')
     SupplyType.query.delete()
+
   supply_list_pairs = [
     ("N95 Regular", "https://en.wikipedia.org/wiki/N95_mask"),
     ("N95 Small", "https://en.wikipedia.org/wiki/N95_mask"),

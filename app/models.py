@@ -17,16 +17,30 @@ class RequestStatusType(enum.Enum):
   sent = 4      # Item on the way
   completed = 5 # Order completed
 
+#######################################
+## Users
+#######################################
+
+verifications = db.Table('verifications',
+  db.Column('verified_id', db.Integer, db.ForeignKey('user.id', ondelete="cascade")),
+  db.Column('verifier_id', db.Integer, db.ForeignKey('user.id', ondelete="cascade"))
+)
+
 class User(UserMixin, db.Model):
   id = db.Column(db.Integer, primary_key=True)
   username = db.Column(db.String(64), index=True, unique=True)
   email = db.Column(db.String(120), index=True, unique=True)
   password_hash = db.Column(db.String(128))
   account_type = db.Column(db.Enum(AccountType))
-  verified = db.Column(db.Boolean, default=False)
+  verified_tag = db.Column(db.Boolean, default=False)
   hospital = db.relationship('Hospital', uselist=False, backref='owner')
   requests = db.relationship('RequestGroup', backref='requester', lazy='dynamic')
   donations = db.relationship('SingleRequest', backref='donor', lazy='dynamic')
+  verified = db.relationship(
+        'User', secondary=verifications,
+        primaryjoin=(verifications.c.verifier_id == id),
+        secondaryjoin=(verifications.c.verified_id == id),
+        backref=db.backref('verifier', lazy='dynamic'), lazy='dynamic', cascade="all,delete")
 
   def set_password(self, password):
     self.password_hash = generate_password_hash(password)
@@ -41,6 +55,18 @@ class User(UserMixin, db.Model):
     return jwt.encode(
       {'reset_password': self.id, 'exp': time() + expires_in},
       app.config['SECRET_KEY'], algorithm='HS256').decode('utf-8')
+
+  def verify(self, user):
+    if not user.is_verified_by(self):
+      user.verified.append(self)
+
+  def unverify(self, user):
+    if user.is_verified_by(self):
+      user.verified.remove(self)
+
+  def is_verified_by(self, user):
+    return self.verified.filter(
+      verifications.c.verified_id == user.id).count() > 0
 
   @staticmethod
   def is_admin(u):
@@ -60,7 +86,7 @@ class User(UserMixin, db.Model):
 
   @staticmethod
   def is_verified(u):
-    return u.is_authenticated and u.verified
+    return u.is_authenticated and u.verified_tag
   
   @staticmethod
   def verify_reset_password_token(token):
@@ -84,6 +110,10 @@ class User(UserMixin, db.Model):
 def load_user(id):
   return User.query.get(int(id))
 
+#######################################
+## Hospital and PPEs
+#######################################
+
 class SupplyType(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   name = db.Column(db.String(64), index=True, unique=True)
@@ -105,6 +135,10 @@ class Hospital(db.Model):
   def __repr__(self):
     return '<Hospital {}>'.format(self.name)
 
+#######################################
+## Requests
+#######################################
+
 class RequestStatus(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   status_type = db.Column(db.Enum(RequestStatusType))
@@ -117,6 +151,7 @@ class SingleRequest(db.Model):
   supply_id = db.Column(db.Integer, db.ForeignKey('supply_type.id'))
   group_id = db.Column(db.Integer, db.ForeignKey('request_group.id'))
   quantity = db.Column(db.Integer)
+  custom_info = db.Column(db.String(505))
   fulfilled = db.Column(db.Integer)
   completed = db.Column(db.Boolean, default=False)
   show_donors = db.Column(db.Boolean)
