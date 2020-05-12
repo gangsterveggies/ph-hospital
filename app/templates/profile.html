@@ -17,6 +17,7 @@
       {% endif %}
       {% if is_donor(current_user) %}
       <a href="{{ url_for('donation_log') }}" class="btn btn-primary btn-lg">Find PPE Requests</a>
+      <a href="{{ url_for('verify_list') }}" class="btn btn-primary btn-lg">Verify new users</a>
       {% endif %}
     </p>
     {% if is_admin(current_user) %}

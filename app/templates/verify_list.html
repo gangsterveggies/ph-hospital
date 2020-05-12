@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<ul class="list-group list-group-flush">
+{% for user in users %}
+<li class="list-group-item">
+  <form class="form-inline" action="" method="post" novalidate>
+    {{ user.username }}
+    {{ user.form.hidden_tag() }}
+    <input type="hidden" name="form-name" value="{{ user.id }}">
+    {{ user.form.submit(class_='btn btn-primary mb-2') }}
+  </form>
+</li>
+{% endfor %}
+</ul>
+
+{% endblock %}

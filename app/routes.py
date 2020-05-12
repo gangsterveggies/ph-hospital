@@ -112,7 +112,6 @@ def hospital_edit_owner(id):
   owner = hospital.owner.username if not hospital.owner is None else None
   form = HospitalEditOwnerForm(username=owner)
   if form.validate_on_submit():
-    app.logger.info(form.username.data)
     user = User.query.filter_by(username=form.username.data).first()
     if user is None:
       flash('Invalid username', 'danger')
@@ -229,7 +228,6 @@ def match_donation(id):
       flash('This request has been fulfilled by another donor', 'danger')
   return redirect(url_for('donation_log'))
 
-# https://github.com/lepture/flask-wtf/issues/182
 @app.route('/drop_donation/<id>', methods=['GET'])
 @donor_required
 def drop_donation(id):
@@ -309,7 +307,6 @@ def profile():
     for single_request in current_user.donations.order_by(SingleRequest.donation_timestamp.desc()):
       if not single_request.completed:
         form = SendSuppliesForm(str(single_request.id), single_request.quantity - (single_request.fulfilled or 0))
-        app.logger.info(single_request.quantity - (single_request.fulfilled or 0))
         donation_index[single_request.id] = form
         donation_list.append({'id': single_request.id
                             ,'requester': single_request.request.requester.username
@@ -365,3 +362,38 @@ def profile():
   verifications = current_user.verified.limit(3).all()
 
   return render_template('profile.html', title='Profile page', donations=donation_list, requests=request_list, verifications=verifications)
+
+@app.route('/verify_list', methods=['GET', 'POST'])
+@donor_required
+def verify_list():
+  user_list = []
+  user_index = {}
+  users = User.query.filter_by(verified_tag=False)
+
+  for user in users:
+    form = VerifyAccountForm(prefix=str(user.id))
+    user_list.append({'username': user.username
+                      ,'id': user.id
+                      ,'form': form})
+    user_index[str(user.id)] = (form, user)
+
+  if flask_request.method == 'POST':    
+    try:
+      form_name = flask_request.form['form-name']
+      form, user = user_index[form_name]
+      if form.submit.data:
+        user.verified_tag = True
+        current_user.verify(user)
+        for requests in user.requests:
+          for single_request in requests.item_list:
+            single_request.show_donors=True
+            request_status = RequestStatus(status_type=RequestStatusType.looking, single_request=single_request)
+            db.session.add(request_status)
+        db.session.commit()
+        flash('Verified {} successfully'.format(user.username), 'success')
+        return redirect(url_for('verify_list'))
+    except Exception as e:
+      app.logger.info(e)
+      return redirect(url_for('verify_list'))
+
+  return render_template('verify_list.html', title='Users to verify', users=user_list)

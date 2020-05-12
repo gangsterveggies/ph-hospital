@@ -3,9 +3,26 @@
 {% block content %}
 <h2>List of PPE requests:</h2>
 
-<ul class="mb-0 list-group list-group-flush">
-  {% for item in requests %}
-  <li class="list-group-item">{{ macros.user_link(item.requester) }} requested {{ item.quantity }} units of {{ item.supply }} <a href="{{ url_for('match_donation', id=item.id) }}">(Donate)</a></li>
-  {% endfor %}
-</ul>
+<h5>Filter by:</h5>
+
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th scope="col">Requesting Person</th>
+      <th scope="col">Quantity</th>
+      <th scope="col">PPE Type</th>
+      <th scope="col"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in requests %}
+    <tr>
+      <th>{{ macros.user_link(item.requester) }}</th>
+      <td>{{ item.quantity }}</td>
+      <td>{{ item.supply }}</td>
+      <td><a href="{{ url_for('match_donation', id=item.id) }}">(Donate)</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 {% endblock %}

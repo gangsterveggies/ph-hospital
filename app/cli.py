@@ -1,26 +1,27 @@
-import click, os
+import click, os, random
 from faker import Faker
 from app import app, db
-from app.models import User, AccountType, Hospital, SupplyType, RequestStatus, SingleRequest, RequestGroup, verifications
+from app.models import User, AccountType, Hospital, SupplyType, RequestStatus, SingleRequest, RequestGroup, RequestStatusType
 
 @app.cli.command('setup-debug-database')
 def setup_debug_database():
   if app.debug:
     click.echo('Deleting all users and adding default users')
+
+    user_list = User.query.all()
+    for u in user_list:
+      u.verified = []
+    db.session.commit()
+    
     User.query.delete()
-    u = User(username='tim', email='tim@test.com', account_type=AccountType.admin)
-    u.verified_tag = True
-    u.set_password('tim')
-    db.session.add(u)
+    user_tim = User(username='tim', email='tim@test.com', account_type=AccountType.admin)
+    user_tim.verified_tag = True
+    user_tim.set_password('tim')
+    db.session.add(user_tim)
 
     for i in range(5):
-      u = User(username='donor' + str(i + 1), email='donor' + str(i + 1) + '@test.com', account_type=AccountType.donor)
+      u = User(username='donor' + str(i + 1), email='donor' + str(i + 1) + '@test.com', account_type=AccountType.donor, verified_tag=True)
       u.set_password('donor')
-      db.session.add(u)
-
-    for i in range(5):
-      u = User(username='doctor' + str(i + 1), email='doctor' + str(i + 1) + '@test.com', account_type=AccountType.doctor)
-      u.set_password('doctor')
       db.session.add(u)
     
     db.session.commit()
@@ -30,8 +31,10 @@ def setup_debug_database():
 
     fake = Faker()
     f = lambda x : str(x[0]) + " " + str(x[1])
+    hospital_list = []
     for i in range(10):
       h = Hospital(name=(fake.city() + " Hospital"), location=f(fake.local_latlng()), address=fake.address(), contact=fake.phone_number())
+      hospital_list.append(h)
       db.session.add(h)
     db.session.commit()
 
@@ -39,6 +42,20 @@ def setup_debug_database():
     RequestStatus.query.delete()
     SingleRequest.query.delete()
     RequestGroup.query.delete()
+    db.session.commit()
+    
+    for i in range(5):
+      u = User(username='doctor' + str(i + 1), email='doctor' + str(i + 1) + '@test.com', account_type=AccountType.doctor, hospital=random.choice(hospital_list))
+      u.set_password('doctor')
+      db.session.add(u)
+
+      request = RequestGroup(requester=u)
+      db.session.add(request)
+      single_request = SingleRequest(supply_id=random.choice(range(1,11)), request=request, quantity=10, custom_info=fake.paragraph(), show_donors=False)
+      db.session.add(single_request)
+      request_status = RequestStatus(status_type=RequestStatusType.requested, single_request=single_request)
+      db.session.add(request_status)
+
     db.session.commit()
   else:
     click.echo('This command only works in debug mode...')
