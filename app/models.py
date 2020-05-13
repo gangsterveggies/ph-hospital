@@ -152,7 +152,7 @@ class SingleRequest(db.Model):
   group_id = db.Column(db.Integer, db.ForeignKey('request_group.id'))
   quantity = db.Column(db.Integer)
   custom_info = db.Column(db.String(505))
-  fulfilled = db.Column(db.Integer)
+  fulfilled = db.Column(db.Integer, default=0)
   completed = db.Column(db.Boolean, default=False)
   show_donors = db.Column(db.Boolean)
   donor_id = db.Column(db.Integer, db.ForeignKey('user.id'))

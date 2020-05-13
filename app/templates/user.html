@@ -2,7 +2,7 @@
 
 {% block content %}
 
-<h4>User: {{ user.username }} {{ macros.verified_icon(user, verifications, self_verified) }}</h4>
+<h4>User: {{ user.username }} {{ macros.verified_icon(is_verified(user), verifications, self_verified) }}</h4>
 {% if form %}
   <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}

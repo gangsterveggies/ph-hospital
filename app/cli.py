@@ -3,6 +3,19 @@ from faker import Faker
 from app import app, db
 from app.models import User, AccountType, Hospital, SupplyType, RequestStatus, SingleRequest, RequestGroup, RequestStatusType
 
+supply_list_pairs = [
+  ("N95 Regular", "https://en.wikipedia.org/wiki/N95_mask"),
+  ("N95 Small", "https://en.wikipedia.org/wiki/N95_mask"),
+  ("Surgical Mask", "https://en.wikipedia.org/wiki/Surgical_mask"),
+  ("Gloves", "https://en.wikipedia.org/wiki/Medical_glove"),
+  ("Face Shields", "https://en.wikipedia.org/wiki/Face_shield#Medical"),
+  ("Body Suits", ""),
+  ("Wipes", ""),
+  ("Sanitizer", ""),
+  ("Googles", ""),
+  ("Gowns", "")
+]
+
 @app.cli.command('setup-debug-database')
 def setup_debug_database():
   if app.debug:
@@ -49,12 +62,13 @@ def setup_debug_database():
       u.set_password('doctor')
       db.session.add(u)
 
-      request = RequestGroup(requester=u)
-      db.session.add(request)
-      single_request = SingleRequest(supply_id=random.choice(range(1,11)), request=request, quantity=10, custom_info=fake.paragraph(), show_donors=False)
-      db.session.add(single_request)
-      request_status = RequestStatus(status_type=RequestStatusType.requested, single_request=single_request)
-      db.session.add(request_status)
+      for _ in range(10):
+        request = RequestGroup(requester=u)
+        db.session.add(request)
+        single_request = SingleRequest(supply_id=random.choice(range(1,len(supply_list_pairs))), request=request, quantity=10, custom_info=fake.paragraph(), show_donors=False)
+        db.session.add(single_request)
+        request_status = RequestStatus(status_type=RequestStatusType.requested, single_request=single_request)
+        db.session.add(request_status)
 
     db.session.commit()
   else:
@@ -66,18 +80,6 @@ def add_base_ppes():
     click.echo('Deleting all current PPEs')
     SupplyType.query.delete()
 
-  supply_list_pairs = [
-    ("N95 Regular", "https://en.wikipedia.org/wiki/N95_mask"),
-    ("N95 Small", "https://en.wikipedia.org/wiki/N95_mask"),
-    ("Surgical Mask", "https://en.wikipedia.org/wiki/Surgical_mask"),
-    ("Gloves", "https://en.wikipedia.org/wiki/Medical_glove"),
-    ("Face Shields", "https://en.wikipedia.org/wiki/Face_shield#Medical"),
-    ("Body Suits", ""),
-    ("Wipes", ""),
-    ("Sanitizer", ""),
-    ("Googles", ""),
-    ("Gowns", "")
-  ]
   for s_name, s_info in supply_list_pairs:
     supply = SupplyType.query.filter_by(name=s_name).first()
     if supply is None:

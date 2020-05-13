@@ -1,0 +1,7 @@
+{% if not item.completed and item.fulfilled == 0 %}
+<span class="badge badge-danger">{{ item.fulfilled }} / {{ item.quantity }}</span>
+{% elif not item.completed %}
+<span class="badge badge-warning">{{ item.fulfilled }} / {{ item.quantity }}</span>
+{% else %}
+<span class="badge badge-success">Completed</span>
+{% endif %}

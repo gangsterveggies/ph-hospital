@@ -1,10 +1,33 @@
 <h2>My donations:</h2>
 
+{% if donations|length > 0 %}
 <ul class="mb-0 list-group list-group-flush">
   {% for item in donations %}
-  <li class="list-group-item">Donate to {{ macros.user_link(item.requester) }} {{ item.quantity }} units of {{ item.supply }} {% if not item.completed %}<a href="{{ url_for('drop_donation', id=item.id) }}">(Remove)</a> <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#donation-item-{{ loop.index }}">Send</button>{% else %}<span class="badge badge-success">Completed</span>{% endif %}</li>
+  <li class="list-group-item">
+    {{ macros.user_link(item.requester) }} is requesting {{ item.quantity }} units of {{ item.supply }} {% include '_quantity_badge.html' %}
+    {% if not item.completed %}
+    <div class="dropdown d-inline-block ml-3">
+      <button class="btn btn-secondary dropdown-toggle" type="button" id="donation-dropdown-{{ loop.index }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Options
+      </button>
+      <div class="dropdown-menu" aria-labelledby="donation-dropdown-{{ loop.index }}">
+        <a class="dropdown-item" href="{{ url_for('drop_donation', id=item.id) }}">Remove donation</a>
+        <button type="button" class="dropdown-item" data-toggle="modal" data-target="#donation-item-{{ loop.index }}">Send units</button>
+      </div>
+    </div>
+    {% endif %}
+  </li>
+  
   {% if not item.completed %}
   {% include '_send_modal.html' %}
   {% endif %}
   {% endfor %}
 </ul>
+{% else %}
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <p class="lead text-center">You have no matched donations. Click on "Find PPE
+    requests" to start donating.</p>
+  </div>
+</div>
+{% endif %}

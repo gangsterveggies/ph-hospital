@@ -296,7 +296,10 @@ def user_page(username):
 @donor_required
 def user_popup(username):
   user = User.query.filter_by(username=username).first_or_404()
-  return render_template('user_popup.html', user=user)
+  verifications = user.verified.limit(3).all()
+  self_verified = user.is_verified_by(current_user)
+  user_verified = user.verified_tag
+  return render_template('user_popup.html', user=user, verifications=verifications, self_verified=self_verified, user_verified=user_verified)
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required

@@ -58,8 +58,8 @@
   </span>
 {%- endmacro %}
 
-{% macro verified_icon(user, verification_list, self_verified=False) -%}
- {% if is_verified(user) %}
+{% macro verified_icon(user_verified, verification_list, self_verified=False) -%}
+ {% if user_verified %}
    <button type="button" class="close float-none" data-placement="right" data-toggle="tooltip" title="{{ verified_text(verification_list) }}">
      <i class="fas fa-user-check {% if self_verified %}self_verified{% endif %}"></i>
    </button>
@@ -70,10 +70,10 @@
   {% if verification_list|length == 0 %}
     Verified user
   {% elif verification_list|length == 1 %}
-    Verified by {{ verification_list[0].username }}.
+    Verified by {{ verification_list[0].username }}
   {% elif verification_list|length == 2 %}
-    Verified by {{ verification_list[0].username }} and {{ verification_list[1].username }}.
+    Verified by {{ verification_list[0].username }} and {{ verification_list[1].username }}
   {% else %}
-    Verified by {{ verification_list[0].username }}, {{ verification_list[1].username }} and more.
+    Verified by {{ verification_list[0].username }}, {{ verification_list[1].username }} and more
   {% endif %}
 {%- endmacro %}
