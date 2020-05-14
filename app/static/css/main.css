@@ -1,3 +1,7 @@
 .self_verified {
   color: #007bff;
 }
+
+.request-list {
+  list-style-type: none;
+}

@@ -77,3 +77,19 @@
     Verified by {{ verification_list[0].username }}, {{ verification_list[1].username }} and more
   {% endif %}
 {%- endmacro %}
+
+{% macro status_text(type, quantity = 0) -%}
+  {% if type == 'requested' %}
+    Request received
+  {% elif type == 'looking' %}
+    Looking for donors
+  {% elif type == 'matched' %}
+    Matched with a donor
+  {% elif type == 'sent' %}
+    Donor sent {{ quantity }} units
+  {% elif type == 'completed' %}
+    Request completed
+  {% else %}
+    {{ type }}
+  {% endif %}
+{%- endmacro %}

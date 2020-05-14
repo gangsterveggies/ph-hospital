@@ -62,13 +62,14 @@ def setup_debug_database():
       u.set_password('doctor')
       db.session.add(u)
 
-      for _ in range(10):
+      for _a in range(3):
         request = RequestGroup(requester=u)
         db.session.add(request)
-        single_request = SingleRequest(supply_id=random.choice(range(1,len(supply_list_pairs))), request=request, quantity=10, custom_info=fake.paragraph(), show_donors=False)
-        db.session.add(single_request)
-        request_status = RequestStatus(status_type=RequestStatusType.requested, single_request=single_request)
-        db.session.add(request_status)
+        for _ in range(4):
+          single_request = SingleRequest(supply_id=random.choice(range(1,len(supply_list_pairs))), request=request, quantity=10, custom_info=fake.paragraph(), show_donors=False)
+          db.session.add(single_request)
+          request_status = RequestStatus(status_type=RequestStatusType.requested, single_request=single_request)
+          db.session.add(request_status)
 
     db.session.commit()
   else:

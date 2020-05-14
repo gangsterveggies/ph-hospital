@@ -355,9 +355,13 @@ def profile():
     for request_group in current_user.requests.order_by(RequestGroup.id.desc()):
       request_list += [{'id': request_group.id
                         ,'requested_items': [{'supply': single_request.supply.name
+                                              ,'fulfilled': single_request.fulfilled
                                               ,'quantity': single_request.quantity
+                                              ,'completed': single_request.completed
                                               ,'custom_info': single_request.custom_info
+                                              ,'donor': single_request.donor
                                               ,'status': [{'type': status.status_type.name
+                                                           ,'quantity': status.units
                                                            ,'timestamp': status.timestamp}
                                                           for status in single_request.status_list]}
                                              for single_request in request_group.item_list]}]

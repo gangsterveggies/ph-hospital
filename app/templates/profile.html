@@ -5,7 +5,7 @@
 
 <div class="row">
   <div class="col-md-3">
-    <h5 class="card-title">User: {{ current_user.username }} {{ macros.verified_icon(current_user, verifications) }}</h5>
+    <h5 class="card-title">User: {{ current_user.username }} {{ macros.verified_icon(is_verified(current_user), verifications) }}</h5>
   </div>
 
   <div class="col-md-9">
@@ -32,9 +32,16 @@
   </div>
 </div>
 
+<hr />
+
 {% if is_doctor(current_user) %}
 {% set user = current_user %}
-{% include '_request_list.html' %}
+{% set page_title = "Recent PPE requests:" %}
+<div class="row justify-content-md-center">
+  <div class="col-md-8">
+    {% include '_request_list.html' %}
+  </div>
+</div>
 {% endif %}
 
 {% if is_donor(current_user) %}

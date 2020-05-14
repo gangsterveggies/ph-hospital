@@ -11,13 +11,20 @@
         Options
       </button>
       <div class="dropdown-menu" aria-labelledby="donation-dropdown-{{ loop.index }}">
+        {% if item.custom_info %}
+        <button type="button" class="dropdown-item" data-toggle="modal" data-target="#custom-item-1-{{ loop.index }}">Customization details</button>
+        {% endif %}
         <a class="dropdown-item" href="{{ url_for('drop_donation', id=item.id) }}">Remove donation</a>
         <button type="button" class="dropdown-item" data-toggle="modal" data-target="#donation-item-{{ loop.index }}">Send units</button>
       </div>
     </div>
     {% endif %}
   </li>
-  
+
+  {% if item.custom_info %}
+  {% set outer_loop = {'index': 1} %}
+  {% include '_custom_modal.html' %}
+  {% endif %}
   {% if not item.completed %}
   {% include '_send_modal.html' %}
   {% endif %}

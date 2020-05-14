@@ -1,5 +1,5 @@
 <div class="modal fade" id="request-item-{{ outer_loop.index }}-{{ loop.index }}" tabindex="-1" role="dialog">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-dialog-centered" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Request status</h5>
@@ -8,9 +8,11 @@
         </button>
       </div>
       <div class="modal-body">
-        {% for status in item.status %}
-        <p>{{ status.type }} on {{ moment(status.timestamp).format('LLL') }}</p>
-        {% endfor %}
+        <ul class="request-list">
+          {% for status in item.status %}
+          <li class="border-left border-info pl-2 mb-1 pt-1 pb-1">{{ macros.status_text(status.type, status.quantity) }} on {{ moment(status.timestamp).format('LLL') }}</li>
+          {% endfor %}
+        </ul>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>

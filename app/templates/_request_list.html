@@ -1,5 +1,5 @@
 {% if requests|length > 0%}
-  <h2>PPE requests:</h2>
+  <h2>{{ page_title }}</h2>
 
   <div class="accordion" id="request-list">
     {% for request_group in requests %}
@@ -9,18 +9,29 @@
         <button class="btn btn-link collapsed" type="button" data-toggle="collapse" data-target="#request-collapse-{{ loop.index }}">
           <i class="fa fa-angle-down" aria-hidden="true"></i>
         </button>
-        Requested 
+        <span class="font-weight-light">Requested {{ request_group.requested_items|length }} items of PPE on {{ moment(request_group.requested_items[0].status[0].timestamp).format('LLL') }}</span>
       </div>
       <div id="request-collapse-{{ loop.index }}" class="collapse" data-parent="#request-list">
         <div class="card-body">
           <ul class="mb-0 list-group list-group-flush">
             {% for item in request_group.requested_items %}
             <li class="list-group-item">
-              {{ item.quantity }} units of {{ item.supply }}
-              {% if item.custom_info %}
-              <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#custom-item-{{ outer_loop.index }}-{{ loop.index }}">Customization</button>
+              {{ item.quantity }} units of {{ item.supply }} {% include '_quantity_badge.html' %}
+              <div class="dropdown d-inline-block ml-3">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="donation-dropdown-{{ loop.index }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Options
+                </button>
+                <div class="dropdown-menu" aria-labelledby="donation-dropdown-{{ loop.index }}">
+                  {% if item.custom_info %}
+                  <button type="button" class="dropdown-item" data-toggle="modal" data-target="#custom-item-{{ outer_loop.index }}-{{ loop.index }}">Customization details</button>
+                  {% endif %}
+                  <button type="button" class="dropdown-item" data-toggle="modal" data-target="#request-item-{{ outer_loop.index }}-{{ loop.index }}">Check Status</button>
+                </div>
+              </div>
+
+              {% if item.donor %}
+              <span class="pl-1">donation by {{ macros.user_link(item.donor.username) }}</span>
               {% endif %}
-              <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#request-item-{{ outer_loop.index }}-{{ loop.index }}">Check Status</button>
             </li>
             {% if item.custom_info %}
             {% include '_custom_modal.html' %}
