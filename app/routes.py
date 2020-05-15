@@ -196,8 +196,52 @@ def request():
 @app.route('/donation_log', methods=['GET'])
 @donor_required
 def donation_log():
+  user_filters = flask_request.args.get('user', default=None, type=str)
+  if user_filters is None:
+    user_filters = []
+  else:
+    user_filters = [fl.strip() for fl in user_filters.split('$')]
+  supply_filters = flask_request.args.get('supply', default=None, type=str)
+  if supply_filters is None:
+    supply_filters = []
+  else:
+    supply_filters = [fl.strip() for fl in supply_filters.split('$')]
+
   requests = []
-  request_query = SingleRequest.query.filter_by(show_donors=True).order_by(SingleRequest.id.desc())
+  base_request_query = SingleRequest.query.filter_by(show_donors=True)
+
+  user_query = None
+  for user in user_filters:
+    local_query = base_request_query.join(
+      RequestGroup, SingleRequest.group_id == RequestGroup.id).join(
+        User, RequestGroup.requester_id == User.id).filter(
+          User.username == user)
+    if user_query is None:
+      user_query = local_query
+    else:
+      user_query = user_query.union(local_query)
+
+  supply_query = None
+  for supply in supply_filters:
+    local_query = base_request_query.filter(SingleRequest.supply_id == supply)
+    if supply_query is None:
+      supply_query = local_query
+    else:
+      supply_query = supply_query.union(local_query)
+
+  filter_list = [user_query, supply_query]
+  request_query = None
+  for filter_unit in filter_list:
+    if filter_unit is not None:
+      if request_query is None:
+        request_query = filter_unit
+      else:
+        request_query = request_query.intersect(filter_unit)
+
+  if request_query is None:
+    request_query = base_request_query
+  request_query = request_query.order_by(SingleRequest.id.desc()).all()
+  
   for single_request in request_query:
     requests.append({'id': single_request.id
                      ,'requester': single_request.request.requester.username
