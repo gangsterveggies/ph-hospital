@@ -154,6 +154,7 @@ class SingleRequest(db.Model):
   custom_info = db.Column(db.String(505))
   fulfilled = db.Column(db.Integer, default=0)
   completed = db.Column(db.Boolean, default=False)
+  request_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
   show_donors = db.Column(db.Boolean)
   donor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   donation_timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)

@@ -1,16 +1,104 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>List of PPE requests:</h2>
-
 <h5>Filter by:</h5>
+
+<form action="" class="mb-3" method="post" novalidate>
+  {{ form1.hidden_tag() }}
+  <div class="form-group row">
+    <div class="col-2">
+      {{ form1.username.label }}
+    </div>
+    <div class="col-3">
+      {{ form1.username(class_='form-control '+ valid_class(form1.username)) }}
+      {{ macros.error_macro(form1.username) }}
+    </div>
+    <div class="col-2">
+      {{ macros.small_submit_button(form1.submit) }}
+    </div>
+  </div>
+</form>
+
+<form action="" class="mb-3" method="post" novalidate>
+  {{ form2.hidden_tag() }}
+  <div class="form-group row">
+    <div class="col-2">
+      {{ form2.supply_type.label }}
+    </div>
+    <div class="col-3">
+      <select id="{{ form2.supply_type.name }}" name="{{ form2.supply_type.name }}" class="custom-select form-control {{ valid_class(form2.supply_type) }}">
+        {% for subfield in form2.supply_type %}
+        {{ subfield }}
+        {% endfor %}
+      </select>
+      {{ macros.error_macro(form2.supply_type) }}
+    </div>
+
+    <div class="col-2">
+      {{ macros.small_submit_button(form2.submit) }}
+    </div>
+  </div>
+</form>
+
+<div class="row row-cols-1 row-cols-md-10">
+  {% for user in user_filters %}
+  <div class="col-2 mb-4">
+    <div class="card text-white bg-secondary">
+      <div class="card-filter-body">
+        <p class="card-text"><strong>Doctor</strong>: {{ user }} <a href="{{ user_filters_url(user_filters, supply_filters, sort_status, user) }}" class="close">&times;</a></p>
+      </div>
+    </div>
+  </div>
+
+  {% if loop.index != user_filters|length %}
+  <div class="col-1 mb-4">
+    <div class="card text-white bg-danger">
+      <div class="card-filter-body">
+        <p class="card-text text-center">OR</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% if user_filters|length > 0 and supply_filters|length > 0 %}
+  <div class="col-1 mb-4">
+    <div class="card text-white bg-info">
+      <div class="card-filter-body">
+        <p class="card-text text-center">AND</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  
+  {% for supply in supply_filters %}
+  <div class="col-2 mb-4">
+    <div class="card bg-light">
+      <div class="card-filter-body">
+        <p class="card-text"><strong>PPE</strong>: {{ supply.name }} <a href="{{ supply_filters_url(user_filters, supply_filters, sort_status, supply.id) }}" class="close">&times;</a></p>
+      </div>
+    </div>
+  </div>
+  
+  {% if loop.index != supply_filters|length %}
+  <div class="col-1 mb-4">
+    <div class="card text-white bg-danger">
+      <div class="card-filter-body">
+        <p class="card-text text-center">OR</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
 
 <table class="table table-hover">
   <thead>
     <tr>
-      <th scope="col">Requesting Person</th>
-      <th scope="col">Quantity</th>
-      <th scope="col">PPE Type</th>
+      <th scope="col">Requesting Doctor <a href="{{ sort_filters_url(user_filters, supply_filters, sort_status, 1) }}"><i class="close fas {{ sort_icon(sort_status, 1) }}"></i></a></th>
+      <th scope="col">Quantity <a href="{{ sort_filters_url(user_filters, supply_filters, sort_status, 2) }}"><i class="close fas {{ sort_icon(sort_status, 2) }}"></i></a></th>
+      <th scope="col">PPE Type <a href="{{ sort_filters_url(user_filters, supply_filters, sort_status, 3) }}"><i class="close fas {{ sort_icon(sort_status, 3) }}"></i></a></th>
+      <th scope="col">Request Date <a href="{{ sort_filters_url(user_filters, supply_filters, sort_status, 0) }}"><i class="close fas {{ sort_icon(sort_status, 0) }}"></i></a></th>
       <th scope="col"></th>
     </tr>
   </thead>
@@ -18,9 +106,10 @@
     {% for item in requests %}
     <tr>
       <th>{{ macros.user_link(item.requester) }}</th>
-      <td>{{ item.quantity }}</td>
+      <td>{{ item.quantity - item.fulfilled }}</td>
       <td>{{ item.supply }}</td>
-      <td><a href="{{ url_for('match_donation', id=item.id) }}">(Donate)</a></td>
+      <td>{{ moment(item.request_timestamp).format('L') }}</td>
+      <td class="text-center"><a class="btn btn-primary mt-0" href="{{ url_for('match_donation', id=item.id) }}">Match Donation</a></td>
     </tr>
     {% endfor %}
   </tbody>

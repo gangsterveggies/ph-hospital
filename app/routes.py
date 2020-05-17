@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, jsonify
 from flask import request as flask_request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
-from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, SupplyForm, RequestForm, VerifyAccountForm, SendSuppliesForm
+from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, SupplyForm, RequestForm, VerifyAccountForm, SendSuppliesForm, UserFilterForm, SupplyFilterForm
 from app.models import User, AccountType, Hospital, SupplyType, RequestGroup, SingleRequest, RequestStatus, RequestStatusType
 from app.helpers import admin_required, doctor_required, donor_required
 from app.email import send_password_reset_email, send_create_account_email
@@ -193,28 +193,59 @@ def request():
 ## Donor pages
 #######################################
 
-@app.route('/donation_log', methods=['GET'])
+@app.route('/donation_log', methods=['GET', 'POST'])
 @donor_required
 def donation_log():
+  form1 = UserFilterForm(prefix='f1')
+  form2 = SupplyFilterForm(prefix='f2')
+  form2.supply_type.choices = [(s.id, s.name) for s in SupplyType.query.order_by('name')]
+  
   user_filters = flask_request.args.get('user', default=None, type=str)
-  if user_filters is None:
+  if user_filters is None  or user_filters == '':
     user_filters = []
   else:
     user_filters = [fl.strip() for fl in user_filters.split('$')]
+  user_filters = list(set(user_filters))
+
   supply_filters = flask_request.args.get('supply', default=None, type=str)
-  if supply_filters is None:
+  if supply_filters is None or supply_filters == '':
     supply_filters = []
   else:
     supply_filters = [fl.strip() for fl in supply_filters.split('$')]
+  supply_filters = list(set(supply_filters))
+
+  sort_status = (flask_request.args.get('sortby', default=None, type=str)
+                 ,flask_request.args.get('sorttype', default=None, type=str))
+  if sort_status[0] is None:
+    sort_status = ("0", sort_status[1])
+  if sort_status[1] is None:
+    sort_status = (sort_status[0], "0")
+
+  supply_filters_names = []
+  for supply in supply_filters:
+    supply_obj = SupplyType.query.filter_by(id = supply).first()
+    if supply_obj is None:
+      flash("Invalid filter", "danger")
+      return render_template('donation_log.html', title='List of requests', requests=[], user_filters=[], supply_filters=[], form1=form1, form2=form2)
+    supply_filters_names.append({'id': supply, 'name': supply_obj.name})
+
+  if form1.submit.data and form1.validate_on_submit():
+    user_filters.append(form1.username.data)
+    return redirect(url_for('donation_log', user='$'.join(user_filters), supply='$'.join(map(str, supply_filters)), sortby=sort_status[0], sorttype=sort_status[1]))
+
+  if form2.submit.data and form2.validate_on_submit():
+    supply_filters.append(form2.supply_type.data)
+    return redirect(url_for('donation_log', user='$'.join(user_filters), supply='$'.join(map(str, supply_filters)), sortby=sort_status[0], sorttype=sort_status[1]))
 
   requests = []
-  base_request_query = SingleRequest.query.filter_by(show_donors=True)
+  base_request_query = db.session.query(SingleRequest, SupplyType, User).filter_by(show_donors=True).join(
+      RequestGroup, SingleRequest.group_id == RequestGroup.id).join(
+        User, RequestGroup.requester_id == User.id).join(
+          SupplyType, SingleRequest.supply_id == SupplyType.id)
 
   user_query = None
   for user in user_filters:
-    local_query = base_request_query.join(
-      RequestGroup, SingleRequest.group_id == RequestGroup.id).join(
-        User, RequestGroup.requester_id == User.id).filter(
+    local_query = base_request_query.filter(
           User.username == user)
     if user_query is None:
       user_query = local_query
@@ -223,7 +254,7 @@ def donation_log():
 
   supply_query = None
   for supply in supply_filters:
-    local_query = base_request_query.filter(SingleRequest.supply_id == supply)
+    local_query = base_request_query.filter(SupplyType.id == supply)
     if supply_query is None:
       supply_query = local_query
     else:
@@ -240,14 +271,33 @@ def donation_log():
 
   if request_query is None:
     request_query = base_request_query
-  request_query = request_query.order_by(SingleRequest.id.desc()).all()
-  
-  for single_request in request_query:
+  if sort_status == ("0", "0"):
+    sort_query = SingleRequest.id.desc()
+  elif sort_status == ("0", "1"):
+    sort_query = SingleRequest.id.asc()
+  elif sort_status == ("1", "0"):
+    sort_query = User.username.desc()
+  elif sort_status == ("1", "1"):
+    sort_query = User.username.asc()
+  elif sort_status == ("2", "0"):
+    sort_query = SingleRequest.quantity.desc()
+  elif sort_status == ("2", "1"):
+    sort_query = SingleRequest.quantity.asc()
+  elif sort_status == ("3", "0"):
+    sort_query = SupplyType.name.desc()
+  elif sort_status == ("3", "1"):
+    sort_query = SupplyType.name.asc()
+  request_query = request_query.order_by(sort_query)
+  request_query = request_query.all()
+
+  for (single_request, supply, user) in request_query:
     requests.append({'id': single_request.id
-                     ,'requester': single_request.request.requester.username
-                     ,'supply': single_request.supply.name
-                     ,'quantity': single_request.quantity})
-  return render_template('donation_log.html', title='List of requests', requests=requests)
+                     ,'requester': user.username
+                     ,'supply': supply.name
+                     ,'quantity': single_request.quantity
+                     ,'fulfilled': single_request.fulfilled
+                     ,'request_timestamp': single_request.request_timestamp})
+  return render_template('donation_log.html', title='List of requests', requests=requests, user_filters=user_filters, supply_filters=supply_filters_names, form1=form1, form2=form2, sort_status=sort_status)
 
 @app.route('/match_donation/<id>', methods=['GET'])
 @donor_required

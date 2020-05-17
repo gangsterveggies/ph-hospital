@@ -108,3 +108,21 @@ def SendSuppliesForm(prefix, maxRange):
     submit = SubmitField('Send Units')
   setattr(TempForm, 'quantity', IntegerField('Quantity (at most {})'.format(maxRange), validators=[DataRequired(), NumberRange(min=1, max=maxRange)]))
   return TempForm(prefix=prefix)
+
+class UserFilterForm(FlaskForm):
+  username = StringField('Doctor username')
+  submit = SubmitField('Add User Filter')
+
+  def validate_username(self, username):
+    user = User.query.filter_by(username=username.data).first()
+    if user is None or user.account_type != AccountType.doctor:
+      raise ValidationError('Invalid user.')
+
+class SupplyFilterForm(FlaskForm):
+  supply_type = SelectField('PPE Type', coerce=int)
+  submit = SubmitField('Add PPE Filter')
+
+  def validate_supply_type(self, supply_type):
+    supply = SupplyType.query.filter_by(id=supply_type.data).first()
+    if supply is None:
+      raise ValidationError('Invalid PPE type.')

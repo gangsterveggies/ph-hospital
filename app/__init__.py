@@ -25,6 +25,10 @@ app.jinja_env.globals.update(is_admin=models.User.is_admin)
 app.jinja_env.globals.update(is_doctor=models.User.is_doctor)
 app.jinja_env.globals.update(is_donor=models.User.is_donor)
 app.jinja_env.globals.update(is_verified=models.User.is_verified)
+app.jinja_env.globals.update(user_filters_url=helpers.user_filters_url)
+app.jinja_env.globals.update(supply_filters_url=helpers.supply_filters_url)
+app.jinja_env.globals.update(sort_filters_url=helpers.sort_filters_url)
+app.jinja_env.globals.update(sort_icon=helpers.sort_icon)
 
 if not app.debug:
   if app.config['MAIL_SERVER']:
