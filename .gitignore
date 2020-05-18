@@ -38,6 +38,7 @@ nosetests.xml
 venv
 app.db
 ph_hospital.log*
+.env
 
 tmp/*
 
