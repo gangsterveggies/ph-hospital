@@ -31,7 +31,7 @@ def login():
     login_user(user, remember=True)
     next_page = flask_request.args.get('next')
     if not next_page or url_parse(next_page).netloc != '':
-      next_page = url_for('index')
+      next_page = url_for('profile')
     return redirect(next_page)
   return render_template('login.html', title='Sign In', form=form)
 
@@ -267,7 +267,21 @@ def donation_log():
       if request_query is None:
         request_query = filter_unit
       else:
-        request_query = request_query.intersect(filter_unit)
+#        request_query = request_query.intersect(filter_unit)
+        subquery = filter_unit.subquery()
+        subquery_field = None
+        if 'id' in dir(subquery.c):
+          subquery_field = subquery.c.id
+        else:
+          single_request_id_field = None
+          for field in dir(subquery.c):
+            if field.endswith("single_request_id"):
+              single_request_id_field = field
+              break
+          if single_request_id_field is not None:
+            subquery_field = getattr(subquery.c, single_request_id_field)
+        if subquery_field is not None:
+          request_query = request_query.join(subquery, SingleRequest.id == subquery_field)
 
   if request_query is None:
     request_query = base_request_query
@@ -320,7 +334,7 @@ def match_donation(id):
         flash('This request has been fulfilled by another donor', 'danger')
     else:
       flash('This request has been fulfilled by another donor', 'danger')
-  return redirect(url_for('donation_log'))
+  return redirect(url_for('profile'))
 
 @app.route('/drop_donation/<id>', methods=['GET'])
 @donor_required
@@ -432,6 +446,7 @@ def profile():
         db.session.add(request_status)
         if single_request.fulfilled == single_request.quantity:
           single_request.completed = True
+          single_request.show_donors = False
           request_status = RequestStatus(status_type=RequestStatusType.completed, single_request=single_request)
           db.session.add(request_status)
         db.session.commit()

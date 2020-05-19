@@ -7,15 +7,7 @@
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('supply_type') }}">PPEs</a>
-      </li>
-
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('hospital') }}">Hospitals</a>
+        <a class="nav-link" href="{{ url_for('profile') }}">My Dashboard</a>
       </li>
     </ul>
 
@@ -27,7 +19,7 @@
       {% else %}
       <li class="nav-item">
         <span class="navbar-text">
-          Hi, <a href="{{ url_for('profile') }}">{{ current_user.username }}</a>
+          Hi, {{ current_user.username }}
         </span>
       </li>
       <li class="nav-item">
