@@ -45,7 +45,8 @@
 {% endif %}
 
 {% if is_donor(current_user) %}
-{% include '_donation_list.html' %}
+{# {% include '_donation_list.html' %} #}
+{% include '_pledge_list.html' %}
 {% endif %}
 
 {% endblock %}

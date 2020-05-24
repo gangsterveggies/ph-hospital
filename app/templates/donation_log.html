@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script type=text/javascript src="{{ url_for('static', filename='js/pledge-donation.js') }}"></script>
+
 <h5>Filter by:</h5>
 
 <form action="" class="mb-3" method="post" novalidate>
@@ -109,7 +111,16 @@
       <td>{{ item.quantity - item.fulfilled }}</td>
       <td>{{ item.supply }}</td>
       <td>{{ moment(item.request_timestamp).format('L') }}</td>
-      <td class="text-center"><a class="btn btn-primary mt-0" href="{{ url_for('match_donation', id=item.id) }}">Match Donation</a></td>
+      <td id="item-request-{{ loop.index }}" class="text-center">
+        <div class="row justify-content-center">
+          <div class="col-sm-3">
+            <input type="number" class="form-control item-quantity" id="item-request-input-{{ loop.index }}" />
+          </div>
+          <div class="col-sm-6">
+            <a class="btn btn-primary mt-0" href="javascript:pledge_donation('{{ loop.index }}', {{ item.id }});">Pledge Donation</a>
+          </div>
+        </div>
+      </td>
     </tr>
     {% endfor %}
   </tbody>

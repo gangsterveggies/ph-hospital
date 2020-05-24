@@ -16,3 +16,13 @@
   min-height: 1px;
   padding: 0.5rem;
 }
+
+.dropdown-danger {
+  color: #fff;
+  background-color: #dc3545;
+}
+
+.dropdown-danger:hover {
+  color: #fff;
+  background-color: #c82333;
+}

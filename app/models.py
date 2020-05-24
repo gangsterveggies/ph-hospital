@@ -35,6 +35,7 @@ class User(UserMixin, db.Model):
   verified_tag = db.Column(db.Boolean, default=False)
   hospital = db.relationship('Hospital', uselist=False, backref='owner')
   requests = db.relationship('RequestGroup', backref='requester', lazy='dynamic')
+  pledges = db.relationship('Pledge', backref='pledger', lazy='dynamic')
   donations = db.relationship('SingleRequest', backref='donor', lazy='dynamic')
   verified = db.relationship(
         'User', secondary=verifications,
@@ -149,17 +150,32 @@ class RequestStatus(db.Model):
 class SingleRequest(db.Model):
   id = db.Column(db.Integer, primary_key=True)
   supply_id = db.Column(db.Integer, db.ForeignKey('supply_type.id'))
-  group_id = db.Column(db.Integer, db.ForeignKey('request_group.id'))
-  quantity = db.Column(db.Integer)
   custom_info = db.Column(db.String(505))
-  fulfilled = db.Column(db.Integer, default=0)
-  completed = db.Column(db.Boolean, default=False)
+  group_id = db.Column(db.Integer, db.ForeignKey('request_group.id'))
   request_timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+  
+  quantity = db.Column(db.Integer)
+  fulfilled = db.Column(db.Integer, default=0)
+
+  pledges = db.relationship('Pledge', backref='single_request', lazy='dynamic')
+  
+  completed = db.Column(db.Boolean, default=False)
+  
   show_donors = db.Column(db.Boolean)
   donor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
   donation_timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+
   current_status = db.Column(db.Enum(RequestStatusType))
   status_list = db.relationship('RequestStatus', backref='single_request', lazy='dynamic')
+
+  def fulfill(self, quantity):
+    self.fulfilled += quantity
+    request_status = RequestStatus(status_type=RequestStatusType.sent, units=quantity, single_request=self)
+    db.session.add(request_status)
+    if self.fulfilled >= self.quantity:
+      self.completed = True
+      request_status = RequestStatus(status_type=RequestStatusType.completed, single_request=self)
+      db.session.add(request_status)
 
   def __repr__(self):
     supply = SupplyType.query.filter_by(id=self.supply_id).first()
@@ -172,3 +188,18 @@ class RequestGroup(db.Model):
 
   def __repr__(self):
     return '<Request {}>'.format(self.item_list.all())
+
+class Pledge(db.Model):
+  id = db.Column(db.Integer, primary_key=True)
+  quantity = db.Column(db.Integer)
+  request_id = db.Column(db.Integer, db.ForeignKey('single_request.id'))
+  timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+  pledger_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+  confirmed = db.Column(db.Boolean, default=False)
+
+  def confirm(self):
+    self.single_request.fulfill(self.quantity)
+    self.confirmed = True
+  
+  def __repr__(self):
+    return '<Pledge {}>'.format(self.single_request)

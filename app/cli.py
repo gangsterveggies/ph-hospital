@@ -55,6 +55,7 @@ def setup_debug_database():
   RequestStatus.query.delete()
   SingleRequest.query.delete()
   RequestGroup.query.delete()
+  Pledge.query.delete()
   db.session.commit()
     
   for i in range(5):

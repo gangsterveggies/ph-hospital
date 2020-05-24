@@ -3,7 +3,7 @@ from flask import request as flask_request
 from flask_login import current_user, login_user, logout_user, login_required
 from app import app, db
 from app.forms import LoginForm, CreateAccountForm, ResetPasswordRequestForm, ResetPasswordForm, HospitalEditOwnerForm, AddSupplyTypeForm, CreateHospitalForm, SupplyForm, RequestForm, VerifyAccountForm, SendSuppliesForm, UserFilterForm, SupplyFilterForm
-from app.models import User, AccountType, Hospital, SupplyType, RequestGroup, SingleRequest, RequestStatus, RequestStatusType
+from app.models import User, AccountType, Hospital, SupplyType, RequestGroup, SingleRequest, RequestStatus, RequestStatusType, Pledge
 from app.helpers import admin_required, doctor_required, donor_required
 from app.email import send_password_reset_email, send_create_account_email
 from werkzeug.urls import url_parse
@@ -370,6 +370,35 @@ def send_donation(id):
       flash('You don\'t have access to this request', 'danger')
   return redirect(url_for('profile'))
 
+@app.route('/pledge_donation', methods=['POST'])
+@donor_required
+def pledge_donation():
+  single_request = SingleRequest.query.filter_by(id=int(flask_request.form['id'])).first()
+  quantity = int(flask_request.form['quantity'])
+  if single_request is None:
+    return jsonify({'success': False})
+  
+  if single_request.quantity - single_request.fulfilled < quantity:
+    return jsonify({'success': False})
+
+  pledge = Pledge(quantity=quantity, single_request=single_request, pledger=current_user)
+  db.session.add(pledge)
+  db.session.commit()
+  
+  return jsonify({'success': True})
+
+@app.route('/confirm_pledge', methods=['POST'])
+@donor_required
+def confirm_pledge():
+  pledge = Pledge.query.filter_by(id=int(flask_request.form['id'])).first()
+  if pledge is None or pledge.pledger != current_user:
+    return jsonify({'success': False})
+  
+  pledge.confirm()
+  db.session.commit()
+  
+  return jsonify({'success': True})
+
 #######################################
 ## User pages
 #######################################
@@ -409,55 +438,20 @@ def user_popup(username):
   user_verified = user.verified_tag
   return render_template('user_popup.html', user=user, verifications=verifications, self_verified=self_verified, user_verified=user_verified)
 
-@app.route('/profile', methods=['GET', 'POST'])
+@app.route('/profile', methods=['GET'])
 @login_required
 def profile():
-  donation_list = []
-  donation_index = {}
+  pledge_list = []
   if User.is_donor(current_user):
-    for single_request in current_user.donations.order_by(SingleRequest.donation_timestamp.desc()):
-      if not single_request.completed:
-        form = SendSuppliesForm(str(single_request.id), single_request.quantity - (single_request.fulfilled or 0))
-        donation_index[single_request.id] = form
-        donation_list.append({'id': single_request.id
-                            ,'requester': single_request.request.requester.username
-                            ,'supply': single_request.supply.name
-                            ,'quantity': single_request.quantity
-                            ,'custom_info': single_request.custom_info
-                            ,'fulfilled': single_request.fulfilled
-                            ,'completed': single_request.completed
-                            ,'form': form})
-      else:
-        donation_list.append({'id': single_request.id
-                            ,'requester': single_request.request.requester.username
-                            ,'supply': single_request.supply.name
-                            ,'quantity': single_request.quantity
-                            ,'custom_info': single_request.custom_info
-                            ,'completed': single_request.completed})
-
-  if flask_request.method == 'POST':    
-    try:
-      form_name = flask_request.form['form-name']
-      form = donation_index[int(form_name)]
-      if form.submit.data and form.validate_on_submit():
-        single_request = SingleRequest.query.filter_by(id=form_name).first()
-        single_request.fulfilled = int(form.quantity.data) + (single_request.fulfilled or 0)
-        request_status = RequestStatus(status_type=RequestStatusType.sent, single_request=single_request, units=int(form.quantity.data))
-        db.session.add(request_status)
-        if single_request.fulfilled == single_request.quantity:
-          single_request.completed = True
-          single_request.show_donors = False
-          request_status = RequestStatus(status_type=RequestStatusType.completed, single_request=single_request)
-          db.session.add(request_status)
-        db.session.commit()
-        flash("You marked more {} units as sent".format(form.quantity.data), 'success')
-        return redirect(url_for('profile'))
-      else:
-        flash('Number of units out of range', 'danger')
-        return redirect(url_for('profile'))
-    except:
-      flash('Invalid operation', 'danger')
-      return redirect(url_for('profile'))
+    for pledge in current_user.pledges.order_by(Pledge.timestamp.desc()):
+      pledge_list.append({'id': pledge.id
+                          ,'requester': pledge.single_request.request.requester.username
+                          ,'supply': pledge.single_request.supply.name
+                          ,'quantity': pledge.quantity
+                          ,'request_quantity': pledge.single_request.quantity
+                          ,'timestamp': pledge.timestamp
+                          ,'custom_info': pledge.single_request.custom_info
+                          ,'completed': pledge.confirmed})
 
   request_list = []
   if User.is_doctor(current_user):
@@ -477,7 +471,7 @@ def profile():
 
   verifications = current_user.verified.limit(3).all()
 
-  return render_template('profile.html', title='Profile page', donations=donation_list, requests=request_list, verifications=verifications)
+  return render_template('profile.html', title='Profile page', pledges=pledge_list, requests=request_list, verifications=verifications)
 
 @app.route('/verify_list', methods=['GET', 'POST'])
 @donor_required

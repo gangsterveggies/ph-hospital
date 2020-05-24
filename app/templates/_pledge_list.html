@@ -1,0 +1,46 @@
+<h2>My pledges:</h2>
+
+{% if pledges|length > 0 %}
+<script type=text/javascript src="{{ url_for('static', filename='js/confirm-pledge.js') }}"></script>
+
+<ul class="mb-0 list-group list-group-flush">
+  {% for item in pledges %}
+  <li class="list-group-item">
+    You pledged <span class="badge badge-secondary">{{ item.quantity }}/{{ item.request_quantity }}</span> units of {{ item.supply }} to {{ macros.user_link(item.requester) }}
+    <div class="dropdown d-inline-block ml-3">
+      <button class="btn btn-secondary dropdown-toggle" type="button" id="donation-dropdown-{{ loop.index }}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        Options
+      </button>
+      <div class="dropdown-menu" aria-labelledby="donation-dropdown-{{ loop.index }}">
+        {% if item.custom_info %}
+        <button type="button" class="dropdown-item" data-toggle="modal" data-target="#custom-item-1-{{ loop.index }}">Customization details</button>
+        <div class="dropdown-divider"></div>
+        {% endif %}
+        {% if not item.completed %}
+        <a class="dropdown-item dropdown-danger" href="#">Remove Pledge</a>
+        {% endif %}
+      </div>
+    </div>
+    {% if not item.completed %}
+    <span id="item-pledge-{{ loop.index }}">
+      <a class="btn btn-primary" href="javascript:confirm_pledge('{{ loop.index }}', {{ item.id }});"">Confirm Pledge</a>
+    </span>
+    {% else %}
+    <span class="badge badge-success">Pledge Confirmed!</span>
+    {% endif %}
+  </li>
+
+  {% if item.custom_info %}
+  {% set outer_loop = {'index': 1} %}
+  {% include '_custom_modal.html' %}
+  {% endif %}
+  {% endfor %}
+</ul>
+{% else %}
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <p class="lead text-center">You have no pledged donations. Click on "Find PPE
+    requests" to start donating.</p>
+  </div>
+</div>
+{% endif %}
