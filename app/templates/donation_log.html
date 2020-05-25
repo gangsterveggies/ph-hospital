@@ -77,7 +77,7 @@
   <div class="col-2 mb-4">
     <div class="card bg-light">
       <div class="card-filter-body">
-        <p class="card-text"><strong>PPE</strong>: {{ supply.name }} <a href="{{ supply_filters_url(user_filters, supply_filters, sort_status, supply.id) }}" class="close">&times;</a></p>
+        <p class="card-text"><strong>Item</strong>: {{ supply.name }} <a href="{{ supply_filters_url(user_filters, supply_filters, sort_status, supply.id) }}" class="close">&times;</a></p>
       </div>
     </div>
   </div>
@@ -99,7 +99,7 @@
     <tr>
       <th scope="col">Requesting Doctor <a href="{{ sort_filters_url(user_filters, supply_filters, sort_status, 1) }}"><i class="close fas {{ sort_icon(sort_status, 1) }}"></i></a></th>
       <th scope="col">Quantity <a href="{{ sort_filters_url(user_filters, supply_filters, sort_status, 2) }}"><i class="close fas {{ sort_icon(sort_status, 2) }}"></i></a></th>
-      <th scope="col">PPE Type <a href="{{ sort_filters_url(user_filters, supply_filters, sort_status, 3) }}"><i class="close fas {{ sort_icon(sort_status, 3) }}"></i></a></th>
+      <th scope="col">Item Type <a href="{{ sort_filters_url(user_filters, supply_filters, sort_status, 3) }}"><i class="close fas {{ sort_icon(sort_status, 3) }}"></i></a></th>
       <th scope="col">Request Date <a href="{{ sort_filters_url(user_filters, supply_filters, sort_status, 0) }}"><i class="close fas {{ sort_icon(sort_status, 0) }}"></i></a></th>
       <th scope="col"></th>
     </tr>

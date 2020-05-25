@@ -4,16 +4,15 @@ from app import app, db
 from app.models import User, AccountType, Hospital, SupplyType, RequestStatus, SingleRequest, RequestGroup, RequestStatusType
 
 supply_list_pairs = [
-  ("N95 Regular", "https://en.wikipedia.org/wiki/N95_mask"),
-  ("N95 Small", "https://en.wikipedia.org/wiki/N95_mask"),
+  ("N95 Mask", "https://en.wikipedia.org/wiki/N95_mask"),
   ("Surgical Mask", "https://en.wikipedia.org/wiki/Surgical_mask"),
-  ("Gloves", "https://en.wikipedia.org/wiki/Medical_glove"),
-  ("Face Shields", "https://en.wikipedia.org/wiki/Face_shield#Medical"),
-  ("Body Suits", ""),
-  ("Wipes", ""),
-  ("Sanitizer", ""),
-  ("Googles", ""),
-  ("Gowns", "")
+  ("Disposable Foot Cover", ""),
+  ("Reusable Foot Cover", ""),
+  ("Reusable Bunny Suit", ""),
+  ("Goggles", ""),
+  ("Food Packs", ""),
+  ("Tent", ""),
+  ("Mattress", "")
 ]
 
 @app.cli.command('setup-debug-database')

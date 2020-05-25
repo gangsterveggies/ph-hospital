@@ -16,7 +16,7 @@
     {% if title %}
     <title>{{ title }}</title>
     {% else %}
-    <title>PH-Hospitals</title>
+    <title>GetUsDonations</title>
     {% endif %}
 
     {% import "macros.jinja" as macros %}
@@ -24,7 +24,7 @@
   <body>
     {% include '_nav.html' %}
 
-    <div class="container mt-4">
+    <div class="container">
       {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
       {% for category, message in messages %}
@@ -37,6 +37,12 @@
 
       {% block content %}{% endblock %}
     </div>
+
+    
+    <footer class="container">
+      <hr />
+      <p>© 2020 GetUsDonations.PH</p>
+    </footer>
 
     <script>
       $(function () {

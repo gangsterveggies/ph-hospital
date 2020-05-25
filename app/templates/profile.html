@@ -13,16 +13,16 @@
 
     <p>
       {% if is_doctor(current_user) %}
-      <a href="{{ url_for('request') }}" class="btn btn-primary btn-lg">Request PPE</a>
+      <a href="{{ url_for('request') }}" class="btn btn-primary btn-lg">Hospital Needs</a>
       {% endif %}
       {% if is_donor(current_user) %}
-      <a href="{{ url_for('donation_log') }}" class="btn btn-primary btn-lg">Find PPE Requests</a>
+      <a href="{{ url_for('donation_log') }}" class="btn btn-primary btn-lg">Find Item Requests</a>
       <a href="{{ url_for('verify_list') }}" class="btn btn-primary btn-lg">Verify new users</a>
       {% endif %}
     </p>
     {% if is_admin(current_user) %}
     <p>
-      <a href="{{ url_for('add_supply_type') }}" class="btn btn-primary btn-lg">Add PPE Type</a>
+      <a href="{{ url_for('add_supply_type') }}" class="btn btn-primary btn-lg">Add Item</a>
       <a href="{{ url_for('create_hospital') }}" class="btn btn-primary btn-lg">Add Hospital</a>
     </p>
     <p>
@@ -36,7 +36,7 @@
 
 {% if is_doctor(current_user) %}
 {% set user = current_user %}
-{% set page_title = "Recent PPE requests:" %}
+{% set page_title = "Recent Item requests:" %}
 <div class="row justify-content-md-center">
   <div class="col-md-8">
     {% include '_request_list.html' %}

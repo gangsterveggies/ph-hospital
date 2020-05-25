@@ -2,6 +2,9 @@
 
 {% if pledges|length > 0 %}
 <script type=text/javascript src="{{ url_for('static', filename='js/confirm-pledge.js') }}"></script>
+<div class="alert alert-info" role="alert">
+  Please click on "Confirm Pledge" to inform other donors the doctor request has been granted.
+</div>
 
 <ul class="mb-0 list-group list-group-flush">
   {% for item in pledges %}
@@ -39,7 +42,7 @@
 {% else %}
 <div class="jumbotron jumbotron-fluid">
   <div class="container">
-    <p class="lead text-center">You have no pledged donations. Click on "Find PPE
+    <p class="lead text-center">You have no pledged donations. Click on "Find Item
     requests" to start donating.</p>
   </div>
 </div>

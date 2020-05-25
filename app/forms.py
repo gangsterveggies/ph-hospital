@@ -47,14 +47,14 @@ class HospitalEditOwnerForm(FlaskForm):
       raise ValidationError('Username not found.')
 
 class AddSupplyTypeForm(FlaskForm):
-  name = StringField('PPE type', validators=[DataRequired()])
+  name = StringField('Item type', validators=[DataRequired()])
   info = StringField('Info url')
-  submit = SubmitField('Add PPE type')
+  submit = SubmitField('Add Item type')
 
   def validate_name(self, name):
     supply = SupplyType.query.filter_by(name=name.data).first()
     if not supply is None:
-      raise ValidationError('There already is a PPE named {}.'.format(name.data))
+      raise ValidationError('There already is a Item named {}.'.format(name.data))
 
 class CreateHospitalForm(FlaskForm):
   name = StringField('Name', validators=[DataRequired()])
@@ -77,14 +77,14 @@ class CreateHospitalForm(FlaskForm):
       raise ValidationError('There already is a hospital with that name.')
 
 class SupplyEntryForm(Form):
-  supply_type = SelectField('PPE Type', coerce=int)
+  supply_type = SelectField('Item Type', coerce=int)
   quantity = IntegerField('Quantity', [DataRequired(), NumberRange(min=1)])
   custom_info = TextAreaField('Customization', [Length(max=500)])
 
   def validate_supply_type(self, supply_type):
     supply = SupplyType.query.filter_by(id=supply_type.data).first()
     if supply is None:
-      raise ValidationError('Invalid PPE type.')
+      raise ValidationError('Invalid Item type.')
 
 class SupplyForm(FlaskForm):
   name = StringField('Hospital Name', validators=[DataRequired()])
@@ -98,7 +98,7 @@ class SupplyForm(FlaskForm):
 
 class RequestForm(FlaskForm):
   supply_entries = FieldList(FormField(SupplyEntryForm), min_entries=1, max_entries=10)
-  submit = SubmitField('Request PPE')
+  submit = SubmitField('Request Items')
 
 class DonateSingleForm(FlaskForm):
   submit = SubmitField('Donate')
@@ -119,10 +119,10 @@ class UserFilterForm(FlaskForm):
       raise ValidationError('Invalid user.')
 
 class SupplyFilterForm(FlaskForm):
-  supply_type = SelectField('PPE Type', coerce=int)
-  submit = SubmitField('Add PPE Filter')
+  supply_type = SelectField('Item Type', coerce=int)
+  submit = SubmitField('Add Item Filter')
 
   def validate_supply_type(self, supply_type):
     supply = SupplyType.query.filter_by(id=supply_type.data).first()
     if supply is None:
-      raise ValidationError('Invalid PPE type.')
+      raise ValidationError('Invalid Item type.')
