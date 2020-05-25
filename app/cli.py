@@ -28,10 +28,8 @@ def setup_debug_database():
   db.session.commit()
 
   for s_name, s_info in supply_list_pairs:
-    supply = SupplyType.query.filter_by(name=s_name).first()
-    if supply is None:
-      supply = SupplyType(name=s_name, info=s_info)
-      db.session.add(supply)
+    supply = SupplyType(name=s_name, info=s_info)
+    db.session.add(supply)
   db.session.commit()
   
   click.echo('Deleting all users and adding default users')
