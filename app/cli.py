@@ -1,7 +1,7 @@
 import click, os, random
 from faker import Faker
 from app import app, db
-from app.models import User, AccountType, Hospital, SupplyType, RequestStatus, SingleRequest, RequestGroup, RequestStatusType
+from app.models import User, AccountType, Hospital, SupplyType, RequestStatus, SingleRequest, RequestGroup, RequestStatusType, Pledge
 
 supply_list_pairs = [
   ("N95 Mask", "https://en.wikipedia.org/wiki/N95_mask"),
