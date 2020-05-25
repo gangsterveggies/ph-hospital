@@ -31,6 +31,8 @@ def setup_debug_database():
     supply = SupplyType(name=s_name, info=s_info)
     db.session.add(supply)
   db.session.commit()
+
+  supply_ids = [s.id for s in SupplyType.query.all()]
   
   click.echo('Deleting all users and adding default users')
   
@@ -72,7 +74,7 @@ def setup_debug_database():
       request = RequestGroup(requester=u)
       db.session.add(request)
       for _ in range(4):
-        single_request = SingleRequest(supply_id=random.choice(range(1,len(supply_list_pairs))), request=request, quantity=10, custom_info=fake.paragraph(), show_donors=False)
+        single_request = SingleRequest(supply_id=random.choice(supply_ids), request=request, quantity=10, custom_info=fake.paragraph(), show_donors=False)
         db.session.add(single_request)
         request_status = RequestStatus(status_type=RequestStatusType.requested, single_request=single_request)
         db.session.add(request_status)
