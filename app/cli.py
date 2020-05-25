@@ -77,9 +77,8 @@ def setup_debug_database():
 
 @app.cli.command('add-base-ppes')
 def add_base_ppes():
-  if app.debug:
-    click.echo('Deleting all current PPEs')
-    SupplyType.query.delete()
+  click.echo('Deleting all current PPEs')
+  SupplyType.query.delete()
 
   for s_name, s_info in supply_list_pairs:
     supply = SupplyType.query.filter_by(name=s_name).first()
