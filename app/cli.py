@@ -24,6 +24,14 @@ def setup_debug_database():
   RequestGroup.query.delete()
   Pledge.query.delete()
   Hospital.query.delete()
+  SupplyType.query.delete()
+  db.session.commit()
+
+  for s_name, s_info in supply_list_pairs:
+    supply = SupplyType.query.filter_by(name=s_name).first()
+    if supply is None:
+      supply = SupplyType(name=s_name, info=s_info)
+      db.session.add(supply)
   db.session.commit()
   
   click.echo('Deleting all users and adding default users')
@@ -74,18 +82,6 @@ def setup_debug_database():
   db.session.commit()
 #  else:
 #    click.echo('This command only works in debug mode...')
-
-@app.cli.command('add-base-ppes')
-def add_base_ppes():
-  click.echo('Deleting all current PPEs')
-  SupplyType.query.delete()
-
-  for s_name, s_info in supply_list_pairs:
-    supply = SupplyType.query.filter_by(name=s_name).first()
-    if supply is None:
-      supply = SupplyType(name=s_name, info=s_info)
-      db.session.add(supply)
-  db.session.commit()
 
 @app.cli.command('open-mail-server')
 def open_mail_server():
