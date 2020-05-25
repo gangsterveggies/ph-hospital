@@ -23,6 +23,7 @@ def setup_debug_database():
   SingleRequest.query.delete()
   RequestGroup.query.delete()
   Pledge.query.delete()
+  Hospital.query.delete()
   db.session.commit()
   
   click.echo('Deleting all users and adding default users')
@@ -46,7 +47,6 @@ def setup_debug_database():
   db.session.commit()
 
   click.echo('Deleting all hospitals and adding default ones')
-  Hospital.query.delete()
 
   fake = Faker()
   f = lambda x : str(x[0]) + " " + str(x[1])
