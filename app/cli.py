@@ -18,8 +18,15 @@ supply_list_pairs = [
 @app.cli.command('setup-debug-database')
 def setup_debug_database():
 #  if app.debug:
+  click.echo('Deleting all donations and request')
+  RequestStatus.query.delete()
+  SingleRequest.query.delete()
+  RequestGroup.query.delete()
+  Pledge.query.delete()
+  db.session.commit()
+  
   click.echo('Deleting all users and adding default users')
-
+  
   user_list = User.query.all()
   for u in user_list:
     u.verified = []
@@ -48,13 +55,6 @@ def setup_debug_database():
     h = Hospital(name=(fake.city() + " Hospital"), location=f(fake.local_latlng()), address=fake.address(), contact=fake.phone_number())
     hospital_list.append(h)
     db.session.add(h)
-  db.session.commit()
-
-  click.echo('Deleting all donations and request')
-  RequestStatus.query.delete()
-  SingleRequest.query.delete()
-  RequestGroup.query.delete()
-  Pledge.query.delete()
   db.session.commit()
     
   for i in range(5):
