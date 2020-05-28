@@ -11,7 +11,7 @@ function pledge_donation(elemId, donationId) {
       if (response['success']) {
         var $mainElem = $("#item-request-" + elemId.toString());
         $mainElem.children().remove();
-        $mainElem.append("<span class=\"badge badge-success\">Pledged " + quantity.toString() + "!</span> <a href=\"{{ url_for('profile') }}\">Go to the Dashboard</a>");
+        $mainElem.append("<span class=\"badge badge-success\">Pledged " + quantity.toString() + "!</span> <a href=\"/profile\">Go to the Dashboard</a>");
       } else {
         alert("Something went wrong, please refresh the page and try again.");
       }
